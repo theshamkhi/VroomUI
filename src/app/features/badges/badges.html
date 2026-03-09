@@ -1,0 +1,302 @@
+<div class="min-h-full bg-vroom-black">
+
+  <!-- ══════════════════════════════════════════
+    HERO — trophy room header
+  ══════════════════════════════════════════ -->
+  <div class="relative border-b border-vroom-border bg-vroom-dark overflow-hidden">
+    <!-- Subtle grid bg -->
+    <div class="absolute inset-0 opacity-[0.03]" style="
+      background-image: linear-gradient(rgba(255,255,255,1) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,1) 1px, transparent 1px);
+      background-size: 40px 40px;
+    "></div>
+    <!-- Glow spot -->
+    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-32 bg-vroom-amber blur-[80px] opacity-[0.07] pointer-events-none"></div>
+
+    <div class="relative max-w-7xl mx-auto px-6 lg:px-8 py-8">
+      <div class="flex flex-col lg:flex-row lg:items-center gap-6 lg:gap-10">
+
+        <!-- Left: title + stats -->
+        <div class="flex-1">
+          <h1 class="text-2xl font-display font-bold text-vroom-text mb-1">Badge Collection</h1>
+          <p class="text-vroom-text-dim font-body text-sm">
+            Earn badges by completing scenarios and hitting milestones
+          </p>
+
+          @if (!isLoading() && totalCount() > 0) {
+            <div class="flex items-center gap-6 mt-5">
+              <!-- Collection ring -->
+              <div class="relative w-16 h-16 flex-shrink-0">
+                <div class="w-16 h-16 rounded-full"
+                     [style]="'background: conic-gradient(#F59E0B ' + earnedPct() + '%, #1E1E2E ' + earnedPct() + '%); padding: 5px;'">
+                  <div class="w-full h-full rounded-full bg-vroom-dark flex items-center justify-center">
+                    <span class="text-sm font-display font-bold text-vroom-text">{{ earnedPct() }}%</span>
+                  </div>
+                </div>
+              </div>
+              <div class="space-y-1">
+                <div class="text-3xl font-display font-bold text-vroom-amber">
+                  {{ earnedCount() }}<span class="text-vroom-muted text-lg font-normal">/{{ totalCount() }}</span>
+                </div>
+                <div class="text-sm font-body text-vroom-text-dim">badges earned</div>
+              </div>
+              <!-- Divider -->
+              <div class="hidden sm:block w-px h-10 bg-vroom-border"></div>
+              <div class="hidden sm:block space-y-1">
+                <div class="text-xl font-display font-bold text-vroom-text">{{ totalPointsEarned() | number }}</div>
+                <div class="text-xs font-body text-vroom-muted">total points</div>
+              </div>
+              <div class="hidden sm:block space-y-1">
+                <div class="text-xl font-display font-bold text-vroom-text">{{ passedCount() }}</div>
+                <div class="text-xs font-body text-vroom-muted">scenarios passed</div>
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- Right: recently earned showcase strip -->
+        @if (!isLoading() && recentlyEarned().length > 0) {
+          <div class="flex-shrink-0">
+            <p class="text-xs font-body text-vroom-muted mb-3 uppercase tracking-wider">Recently Earned</p>
+            <div class="flex gap-3">
+              @for (sb of recentlyEarned(); track sb.id) {
+                <div class="group relative">
+                  <!-- Badge icon -->
+                  <div class="w-12 h-12 rounded-2xl border flex items-center justify-center text-2xl transition-all duration-300"
+                       [class]="badgeRing(sb.badge.type) + ' ' + badgeGlow(sb.badge.type)">
+                    @if (sb.badge.iconUrl) {
+                      <img [src]="sb.badge.iconUrl" [alt]="sb.badge.name" class="w-7 h-7 object-contain"/>
+                    } @else {
+                      <span>{{ typeEmoji(sb.badge.type) }}</span>
+                    }
+                  </div>
+                  <!-- Tooltip -->
+                  <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 bg-vroom-card border border-vroom-border rounded-xl
+                              text-xs font-body text-vroom-text whitespace-nowrap opacity-0 group-hover:opacity-100
+                              transition-opacity pointer-events-none z-10 shadow-card">
+                    <div class="font-semibold">{{ sb.badge.name }}</div>
+                    <div class="text-vroom-muted">{{ relativeTime(sb.earnedAt) }}</div>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+
+
+  <div class="max-w-7xl mx-auto px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- ══ ERROR ══ -->
+    @if (hasError()) {
+      <div class="flex flex-col items-center justify-center py-24 text-center">
+        <div class="text-5xl mb-4">⚠️</div>
+        <h2 class="font-display font-bold text-xl text-vroom-text mb-2">Couldn't load badges</h2>
+        <button (click)="load()" class="btn-primary mt-4 text-sm inline-flex items-center gap-2">Retry</button>
+      </div>
+    }
+
+    @else if (isLoading()) {
+      <!-- Tabs skeleton -->
+      <div class="flex gap-2">
+        @for (s of skeletons.slice(0,5); track $index) {
+          <div class="h-9 w-24 rounded-xl bg-vroom-surface animate-pulse"></div>
+        }
+      </div>
+      <!-- Grid skeleton -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+        @for (s of skeletons; track $index) {
+          <div class="card rounded-2xl p-4 flex flex-col items-center gap-3 animate-pulse">
+            <div class="w-14 h-14 rounded-2xl bg-vroom-surface"></div>
+            <div class="h-3 bg-vroom-surface rounded-full w-3/4"></div>
+            <div class="h-2 bg-vroom-surface rounded-full w-1/2"></div>
+          </div>
+        }
+      </div>
+    }
+
+    @else if (totalCount() === 0) {
+      <div class="flex flex-col items-center justify-center py-28 text-center">
+        <div class="text-6xl mb-4">🏅</div>
+        <h2 class="font-display font-bold text-xl text-vroom-text mb-2">No badges yet</h2>
+        <p class="text-vroom-text-dim font-body text-sm mb-6">Badges will appear here once the system has some configured.</p>
+        <a routerLink="/scenarios" class="btn-primary inline-flex items-center gap-2 text-sm">Start a Scenario</a>
+      </div>
+    }
+
+    @else {
+
+      <!-- ══════════════════════════════════════
+        FILTER TABS
+      ══════════════════════════════════════ -->
+      <div class="flex gap-2 flex-wrap">
+        @for (tab of tabs(); track tab.type) {
+          <button (click)="setFilter(tab.type)"
+                  class="flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-body transition-all duration-200"
+                  [class.bg-vroom-accent]="activeFilter() === tab.type"
+                  [class.border-vroom-accent]="activeFilter() === tab.type"
+                  [class.text-white]="activeFilter() === tab.type"
+                  [class.bg-vroom-surface]="activeFilter() !== tab.type"
+                  [class.border-vroom-border]="activeFilter() !== tab.type"
+                  [class.text-vroom-text-dim]="activeFilter() !== tab.type"
+                  [class.hover:border-vroom-accent]="activeFilter() !== tab.type">
+          <span>{{ tab.emoji }}</span>
+          <span>{{ tab.label }}</span>
+          <span class="text-xs font-mono px-1.5 py-0.5 rounded-lg"
+                [class.bg-white]="activeFilter() === tab.type"
+            [class.text-white]="activeFilter() === tab.type"
+            [class.bg-vroom-border]="activeFilter() !== tab.type"
+            [class.text-vroom-muted]="activeFilter() !== tab.type">
+          {{ tab.earnedCount }}/{{ tab.totalCount }}
+          </span>
+          </button>
+        }
+      </div>
+
+      <!-- Results count -->
+      <p class="text-xs text-vroom-muted font-body">
+        Showing {{ badgeCards().length }} badges
+        · <span class="text-vroom-green">{{ earnedCardsCount() }} earned</span>
+        · <span class="text-vroom-muted">{{ lockedCardsCount() }} locked</span>
+      </p>
+
+
+      <!-- ══════════════════════════════════════
+        BADGE GRID
+      ══════════════════════════════════════ -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+        @for (card of badgeCards(); track card.badge.id) {
+
+          <!-- ─── EARNED BADGE ─── -->
+          @if (card.earned) {
+            <div class="group relative rounded-2xl border p-4 flex flex-col items-center gap-3 cursor-default transition-all duration-300"
+                 [class]="badgeRing(card.badge.type) + ' ' + badgeGlow(card.badge.type) + ' hover:scale-[1.03]'">
+
+              <!-- Shine sweep on hover -->
+              <div class="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
+                <div class="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/5 to-transparent"></div>
+              </div>
+
+              <!-- Icon -->
+              <div class="relative">
+                <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl relative z-10">
+                  @if (card.badge.iconUrl) {
+                    <img [src]="card.badge.iconUrl" [alt]="card.badge.name" class="w-10 h-10 object-contain"/>
+                  } @else {
+                    {{ typeEmoji(card.badge.type) }}
+                  }
+                </div>
+                <!-- Earned checkmark -->
+                <div class="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-vroom-green border-2 border-vroom-dark flex items-center justify-center z-20">
+                  <svg class="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                  </svg>
+                </div>
+              </div>
+
+              <!-- Name -->
+              <div class="text-center">
+                <p class="text-xs font-body font-semibold text-vroom-text leading-snug line-clamp-2 text-center">
+                  {{ card.badge.name }}
+                </p>
+                <p class="text-xs font-body mt-1" [class]="badgeIconColor(card.badge.type)">
+                  {{ typeLabel(card.badge.type) }}
+                </p>
+              </div>
+
+              <!-- Earned date -->
+              @if (card.earnedAt) {
+                <div class="text-xs font-mono text-vroom-muted mt-auto">
+                  {{ relativeTime(card.earnedAt) }}
+                </div>
+              }
+
+              <!-- Hover tooltip -->
+              <div class="absolute -top-2 left-1/2 -translate-x-1/2 -translate-y-full mb-2 w-48
+                          bg-vroom-card border border-vroom-border rounded-xl px-3 py-2.5
+                          opacity-0 group-hover:opacity-100 transition-opacity duration-200
+                          pointer-events-none z-30 shadow-card text-center">
+                <p class="text-xs font-body font-semibold text-vroom-text mb-1">{{ card.badge.name }}</p>
+                <p class="text-xs font-body text-vroom-text-dim leading-snug">{{ card.badge.description }}</p>
+              </div>
+            </div>
+          }
+
+          @else {
+            <div class="group relative rounded-2xl border border-vroom-border bg-vroom-card p-4 flex flex-col items-center gap-3 cursor-default transition-all duration-200 hover:border-vroom-border/80">
+
+              <!-- Icon (greyscale) -->
+              <div class="relative">
+                <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl opacity-25 grayscale">
+                  @if (card.badge.iconUrl) {
+                    <img [src]="card.badge.iconUrl" [alt]="card.badge.name" class="w-10 h-10 object-contain"/>
+                  } @else {
+                    {{ typeEmoji(card.badge.type) }}
+                  }
+                </div>
+                <!-- Lock icon -->
+                <div class="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-vroom-surface border border-vroom-border flex items-center justify-center">
+                  <svg class="w-2.5 h-2.5 text-vroom-muted" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
+                  </svg>
+                </div>
+              </div>
+
+              <!-- Name (dimmed) -->
+              <div class="text-center">
+                <p class="text-xs font-body font-semibold text-vroom-muted leading-snug line-clamp-2 text-center">
+                  {{ card.badge.name }}
+                </p>
+                <p class="text-xs font-body text-vroom-subtle mt-1">{{ typeLabel(card.badge.type) }}</p>
+              </div>
+
+              <!-- Progress toward unlock -->
+              @if (card.progressPct > 0) {
+                <div class="w-full mt-auto">
+                  <div class="flex items-center justify-between mb-1">
+                    <span class="text-xs font-mono text-vroom-muted">{{ card.progressPct }}%</span>
+                  </div>
+                  <div class="w-full h-1 bg-vroom-surface rounded-full overflow-hidden">
+                    <div class="h-full rounded-full transition-all duration-700"
+                         [class]="typeBarColor(card.badge.type)"
+                         [style.width.%]="card.progressPct">
+                    </div>
+                  </div>
+                </div>
+              }
+
+              <!-- Hover tooltip with unlock requirements -->
+              <div class="absolute -top-2 left-1/2 -translate-x-1/2 -translate-y-full w-52
+                          bg-vroom-card border border-vroom-border rounded-xl px-3 py-2.5
+                          opacity-0 group-hover:opacity-100 transition-opacity duration-200
+                          pointer-events-none z-30 shadow-card text-center">
+                <div class="flex items-center justify-center gap-1.5 mb-1.5">
+                  <svg class="w-3 h-3 text-vroom-muted" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
+                  </svg>
+                  <span class="text-xs font-body font-semibold text-vroom-text">Locked</span>
+                </div>
+                <p class="text-xs font-body text-vroom-text-dim leading-snug mb-2">{{ card.badge.description }}</p>
+                @if (card.progressLabel) {
+                  <p class="text-xs font-mono text-vroom-muted border-t border-vroom-border pt-2 mt-1">
+                    {{ card.progressLabel }}
+                  </p>
+                }
+              </div>
+            </div>
+          }
+        }
+      </div>
+
+      <!-- No results for filter -->
+      @if (badgeCards().length === 0) {
+        <div class="text-center py-16">
+          <p class="text-vroom-muted font-body text-sm">No badges in this category yet.</p>
+        </div>
+      }
+
+    }
+  </div>
+</div>
