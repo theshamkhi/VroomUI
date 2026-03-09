@@ -1,0 +1,936 @@
+<div class="min-h-screen bg-vroom-black">
+
+  <!-- ── Loading skeleton ───────────────────────────────────── -->
+  @if (isLoading()) {
+    <div class="max-w-4xl mx-auto px-6 py-10 space-y-6 animate-pulse">
+      <div class="h-8 bg-vroom-surface rounded w-64"></div>
+      <div class="h-2 bg-vroom-surface rounded w-full"></div>
+      @for (s of skeletons; track $index) {
+        <div class="h-24 bg-vroom-surface rounded-xl"></div>
+      }
+    </div>
+  }
+
+  @if (!isLoading()) {
+    <div class="max-w-5xl mx-auto px-6 py-8">
+
+      <!-- ── Header ─────────────────────────────────────────── -->
+      <div class="flex items-center justify-between mb-8 fade-in">
+        <div>
+          <p class="text-vroom-muted text-sm font-mono mb-1">
+            {{ isEdit() ? 'Edit Scenario' : 'New Scenario' }}
+          </p>
+          <h1 class="text-2xl font-display font-bold text-vroom-text">
+            @if (isEdit() && scenario()) { {{ scenario()!.title }} }
+            @else { Create a Scenario }
+          </h1>
+        </div>
+        <button (click)="saveDraftAndExit()"
+                class="btn-ghost text-sm flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+          Exit to Dashboard
+        </button>
+      </div>
+
+      <!-- ── Step progress bar ──────────────────────────────── -->
+      <div class="flex items-center gap-0 mb-10 fade-in">
+        @for (step of steps; track step.key; let i = $index) {
+          <button
+            (click)="goTo(step.key)"
+            [class.opacity-40]="!isStepReachable(step.key)"
+            [class.cursor-not-allowed]="!isStepReachable(step.key)"
+            class="flex items-center gap-2 group transition-all">
+            <!-- Circle -->
+            <div class="flex flex-col items-center">
+              <div [class]="currentStep() === step.key
+                ? 'w-9 h-9 rounded-full bg-vroom-accent text-white flex items-center justify-center shadow-[0_0_16px_rgba(255,77,28,0.4)] transition-all'
+                : stepsComplete().has(step.key)
+                  ? 'w-9 h-9 rounded-full bg-green-500/20 border border-green-500/40 text-green-400 flex items-center justify-center transition-all'
+                  : 'w-9 h-9 rounded-full bg-vroom-surface border border-vroom-border text-vroom-muted flex items-center justify-center transition-all'">
+                @if (stepsComplete().has(step.key) && currentStep() !== step.key) {
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                  </svg>
+                } @else {
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" [attr.d]="step.icon"/>
+                  </svg>
+                }
+              </div>
+              <span [class]="currentStep() === step.key
+              ? 'text-xs font-mono text-vroom-accent mt-1'
+              : stepsComplete().has(step.key)
+                ? 'text-xs font-mono text-green-400 mt-1'
+                : 'text-xs font-mono text-vroom-muted mt-1'">
+              {{ step.label }}
+            </span>
+            </div>
+          </button>
+          <!-- Connector -->
+          @if (i < steps.length - 1) {
+            <div [class]="stepsComplete().has(step.key)
+              ? 'flex-1 h-px bg-green-500/40 mx-2 mb-5'
+              : 'flex-1 h-px bg-vroom-border mx-2 mb-5'"></div>
+          }
+        }
+      </div>
+
+      <!-- ════════════════════════════════════════════════════ -->
+      <!-- STEP 1 — METADATA                                   -->
+      <!-- ════════════════════════════════════════════════════ -->
+      @if (currentStep() === 'meta') {
+        <div class="fade-in" [formGroup]="metaForm">
+          <div class="card p-8 space-y-6">
+            <h2 class="text-lg font-display font-semibold text-vroom-text">Scenario Details</h2>
+
+            <!-- Title -->
+            <div>
+              <label class="block text-sm font-mono text-vroom-muted mb-2">Title <span class="text-vroom-accent">*</span></label>
+              <input formControlName="title" type="text" placeholder="e.g. Urban Intersection at Rush Hour"
+                     class="w-full bg-vroom-surface border border-vroom-border rounded-lg px-4 py-3 text-vroom-text placeholder-vroom-muted focus:outline-none focus:border-vroom-accent transition-colors font-body"
+                     [class.border-red-500]="hasError('meta', 'title', 'required') || hasError('meta', 'title', 'minlength')">
+              @if (hasError('meta', 'title', 'required')) {
+                <p class="text-red-400 text-xs mt-1 font-mono">Title is required</p>
+              }
+              @if (hasError('meta', 'title', 'minlength')) {
+                <p class="text-red-400 text-xs mt-1 font-mono">Minimum 5 characters</p>
+              }
+            </div>
+
+            <!-- Description -->
+            <div>
+              <label class="block text-sm font-mono text-vroom-muted mb-2">Description <span class="text-vroom-accent">*</span></label>
+              <textarea formControlName="description" rows="4" placeholder="Describe what students will learn and experience..."
+                        class="w-full bg-vroom-surface border border-vroom-border rounded-lg px-4 py-3 text-vroom-text placeholder-vroom-muted focus:outline-none focus:border-vroom-accent transition-colors font-body resize-none"
+                        [class.border-red-500]="hasError('meta', 'description', 'required') || hasError('meta', 'description', 'minlength')"></textarea>
+              @if (hasError('meta', 'description', 'minlength')) {
+                <p class="text-red-400 text-xs mt-1 font-mono">Minimum 20 characters</p>
+              }
+            </div>
+
+            <!-- Difficulty + Theme -->
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-mono text-vroom-muted mb-2">Difficulty <span class="text-vroom-accent">*</span></label>
+                <select formControlName="difficulty"
+                        class="w-full bg-vroom-surface border border-vroom-border rounded-lg px-4 py-3 text-vroom-text focus:outline-none focus:border-vroom-accent transition-colors font-body">
+                  @for (d of difficulties; track d) {
+                    <option [value]="d">{{ d }}</option>
+                  }
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-mono text-vroom-muted mb-2">Theme <span class="text-vroom-accent">*</span></label>
+                <select formControlName="theme"
+                        class="w-full bg-vroom-surface border border-vroom-border rounded-lg px-4 py-3 text-vroom-text focus:outline-none focus:border-vroom-accent transition-colors font-body">
+                  @for (t of themes; track t) {
+                    <option [value]="t">{{ themeLabel(t) }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+
+            <!-- Passing score + Max points -->
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-mono text-vroom-muted mb-2">Passing Score (%) <span class="text-vroom-accent">*</span></label>
+                <input formControlName="passingScore" type="number" min="1" max="100"
+                       class="w-full bg-vroom-surface border border-vroom-border rounded-lg px-4 py-3 text-vroom-text focus:outline-none focus:border-vroom-accent transition-colors font-body tabular-nums"
+                       [class.border-red-500]="hasError('meta', 'passingScore', 'min') || hasError('meta', 'passingScore', 'max')">
+                <p class="text-vroom-muted text-xs mt-1 font-mono">Students must score at least this %</p>
+              </div>
+              <div>
+                <label class="block text-sm font-mono text-vroom-muted mb-2">Max Points <span class="text-vroom-accent">*</span></label>
+                <input formControlName="maxPoints" type="number" min="10"
+                       class="w-full bg-vroom-surface border border-vroom-border rounded-lg px-4 py-3 text-vroom-text focus:outline-none focus:border-vroom-accent transition-colors font-body tabular-nums"
+                       [class.border-red-500]="hasError('meta', 'maxPoints', 'min')">
+              </div>
+            </div>
+
+            <!-- Tags -->
+            <div>
+              <label class="block text-sm font-mono text-vroom-muted mb-2">Tags <span class="text-vroom-muted">(comma-separated)</span></label>
+              <input formControlName="tags" type="text" placeholder="e.g. night, rain, highway"
+                     class="w-full bg-vroom-surface border border-vroom-border rounded-lg px-4 py-3 text-vroom-text placeholder-vroom-muted focus:outline-none focus:border-vroom-accent transition-colors font-body">
+            </div>
+
+            <!-- Learning Objectives -->
+            <div>
+              <label class="block text-sm font-mono text-vroom-muted mb-2">Learning Objectives <span class="text-vroom-muted">(one per line)</span></label>
+              <textarea formControlName="learningObjectives" rows="3" placeholder="Identify hazards in low-visibility conditions&#10;React correctly to pedestrian crossings&#10;Apply defensive driving techniques"
+                        class="w-full bg-vroom-surface border border-vroom-border rounded-lg px-4 py-3 text-vroom-text placeholder-vroom-muted focus:outline-none focus:border-vroom-accent transition-colors font-body resize-none"></textarea>
+            </div>
+
+            @if (saveError()) {
+              <p class="text-red-400 text-sm font-mono bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-3">{{ saveError() }}</p>
+            }
+
+            <div class="flex justify-end pt-2">
+              <button (click)="saveMetadata()" [disabled]="isSaving()"
+                      class="btn-primary flex items-center gap-2 min-w-36 justify-center">
+                @if (isSaving()) {
+                  <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                  </svg>
+                  Saving…
+                } @else {
+                  Save & Continue
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                  </svg>
+                }
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- ════════════════════════════════════════════════════ -->
+      <!-- STEP 2 — VIDEO                                      -->
+      <!-- ════════════════════════════════════════════════════ -->
+      @if (currentStep() === 'video') {
+        <div class="fade-in space-y-6">
+
+          <!-- Selected video preview -->
+          @if (selectedVideo()) {
+            <div class="card p-5 flex items-center gap-4 border-green-500/30">
+              <div class="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center flex-shrink-0">
+                <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-vroom-text font-body font-medium truncate">{{ selectedVideo()!.title }}</p>
+                <p class="text-vroom-muted text-xs font-mono">{{ selectedVideo()!.formattedFileSize }} · {{ selectedVideo()!.status }}</p>
+              </div>
+              <button (click)="selectedVideo.set(null)" class="btn-ghost text-xs text-vroom-muted">Change</button>
+            </div>
+          }
+
+          <!-- Tabs: select existing vs upload new -->
+          <div class="card overflow-hidden">
+            <div class="flex border-b border-vroom-border">
+              <button (click)="videoTab.set('select')"
+                      [class]="videoTab() === 'select'
+                ? 'flex-1 px-6 py-4 text-sm font-mono text-vroom-accent border-b-2 border-vroom-accent bg-vroom-surface/50'
+                : 'flex-1 px-6 py-4 text-sm font-mono text-vroom-muted hover:text-vroom-text transition-colors'">
+                Select Existing
+              </button>
+              <button (click)="videoTab.set('upload')"
+                      [class]="videoTab() === 'upload'
+                ? 'flex-1 px-6 py-4 text-sm font-mono text-vroom-accent border-b-2 border-vroom-accent bg-vroom-surface/50'
+                : 'flex-1 px-6 py-4 text-sm font-mono text-vroom-muted hover:text-vroom-text transition-colors'">
+                Upload New
+              </button>
+            </div>
+
+            <!-- Select tab -->
+            @if (videoTab() === 'select') {
+              <div class="p-6">
+                @if (myVideos().length === 0) {
+                  <div class="text-center py-12 text-vroom-muted">
+                    <svg class="w-12 h-12 mx-auto mb-3 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10l4.553-2.276A1 1 0 0121 8.723v6.554a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                    </svg>
+                    <p class="font-mono text-sm">No videos yet. Upload one below.</p>
+                  </div>
+                } @else {
+                  <div class="space-y-2 max-h-72 overflow-y-auto scrollbar-thin scrollbar-track-vroom-dark scrollbar-thumb-vroom-border">
+                    @for (v of myVideos(); track v.id) {
+                      <button (click)="selectVideo(v)"
+                              [class]="selectedVideo()?.id === v.id
+                        ? 'w-full flex items-center gap-4 p-3 rounded-lg bg-vroom-accent/10 border border-vroom-accent/40 text-left transition-all'
+                        : 'w-full flex items-center gap-4 p-3 rounded-lg bg-vroom-surface border border-vroom-border hover:border-vroom-accent/40 text-left transition-all'">
+                        <div class="w-8 h-8 rounded bg-vroom-dark flex items-center justify-center flex-shrink-0">
+                          <svg class="w-4 h-4 text-vroom-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                          </svg>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                          <p class="text-sm text-vroom-text font-body truncate">{{ v.title }}</p>
+                          <p class="text-xs text-vroom-muted font-mono">{{ v.formattedFileSize }}</p>
+                        </div>
+                        <!-- Status -->
+                        <span [class]="v.status === VideoStatus.READY
+                        ? 'text-xs font-mono text-green-400 bg-green-500/10 px-2 py-0.5 rounded-full'
+                        : v.status === VideoStatus.PROCESSING
+                          ? 'text-xs font-mono text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full'
+                          : 'text-xs font-mono text-vroom-muted bg-vroom-surface px-2 py-0.5 rounded-full'">
+                        {{ v.status }}
+                      </span>
+                        @if (selectedVideo()?.id === v.id) {
+                          <svg class="w-5 h-5 text-vroom-accent flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                          </svg>
+                        }
+                      </button>
+                    }
+                  </div>
+                }
+              </div>
+            }
+
+            <!-- Upload tab -->
+            @if (videoTab() === 'upload') {
+              <div class="p-6 space-y-4">
+                <!-- Drop zone -->
+                <label class="block w-full border-2 border-dashed border-vroom-border hover:border-vroom-accent/60 rounded-xl p-10 text-center cursor-pointer transition-colors group">
+                  <input type="file" accept="video/*" class="hidden" (change)="onVideoFileChange($event)">
+                  @if (uploadFile()) {
+                    <svg class="w-10 h-10 mx-auto mb-3 text-vroom-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    <p class="text-vroom-text font-body font-medium">{{ uploadFile()!.name }}</p>
+                    <p class="text-vroom-muted text-sm font-mono mt-1">{{ (uploadFile()!.size / 1024 / 1024).toFixed(1) }} MB</p>
+                  } @else {
+                    <svg class="w-10 h-10 mx-auto mb-3 text-vroom-muted group-hover:text-vroom-accent transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                    </svg>
+                    <p class="text-vroom-text font-body">Drop a video file or <span class="text-vroom-accent">browse</span></p>
+                    <p class="text-vroom-muted text-sm font-mono mt-1">MP4, MOV, WebM up to 2GB</p>
+                  }
+                </label>
+
+                <!-- Title for upload -->
+                @if (uploadFile()) {
+                  <div>
+                    <label class="block text-sm font-mono text-vroom-muted mb-2">Video Title</label>
+                    <input type="text" [value]="uploadTitle()" (input)="uploadTitle.set($any($event.target).value)"
+                           class="w-full bg-vroom-surface border border-vroom-border rounded-lg px-4 py-3 text-vroom-text placeholder-vroom-muted focus:outline-none focus:border-vroom-accent transition-colors font-body">
+                  </div>
+                }
+
+                <!-- Progress bar -->
+                @if (isUploading()) {
+                  <div>
+                    <div class="flex justify-between text-xs font-mono text-vroom-muted mb-2">
+                      <span>Uploading…</span>
+                      <span class="tabular-nums">{{ uploadProgress() }}%</span>
+                    </div>
+                    <div class="h-2 bg-vroom-surface rounded-full overflow-hidden">
+                      <div class="h-full bg-vroom-accent rounded-full transition-all duration-300"
+                           [style.width.%]="uploadProgress()"></div>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+
+          @if (saveError()) {
+            <p class="text-red-400 text-sm font-mono bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-3">{{ saveError() }}</p>
+          }
+
+          <!-- Actions -->
+          <div class="flex items-center justify-between">
+            <button (click)="skipVideo()" class="btn-ghost text-sm text-vroom-muted">Skip for now</button>
+            <div class="flex gap-3">
+              <button (click)="currentStep.set('meta')" class="btn-secondary text-sm">Back</button>
+              @if (videoTab() === 'select' && selectedVideo()) {
+                <button (click)="attachVideo()" [disabled]="isSaving()"
+                        class="btn-primary flex items-center gap-2 text-sm">
+                  @if (isSaving()) {
+                    <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                    </svg>
+                  }
+                  Use This Video
+                </button>
+              }
+              @if (videoTab() === 'upload' && uploadFile()) {
+                <button (click)="uploadAndAttach()" [disabled]="isUploading()"
+                        class="btn-primary flex items-center gap-2 text-sm">
+                  @if (isUploading()) {
+                    <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                    </svg>
+                    Uploading {{ uploadProgress() }}%
+                  } @else {
+                    Upload & Continue
+                  }
+                </button>
+              }
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- ════════════════════════════════════════════════════ -->
+      <!-- STEP 3 — QUESTIONS                                  -->
+      <!-- ════════════════════════════════════════════════════ -->
+      @if (currentStep() === 'questions') {
+        <div class="fade-in space-y-6">
+
+          <!-- Header row -->
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-lg font-display font-semibold text-vroom-text">Questions</h2>
+              <p class="text-vroom-muted text-sm font-mono mt-0.5">
+                {{ questions().length }} question{{ questions().length !== 1 ? 's' : '' }} ·
+                <span class="text-vroom-accent tabular-nums">{{ totalPoints() }} pts total</span>
+              </p>
+            </div>
+            @if (!showQForm()) {
+              <button (click)="openNewQuestion()" class="btn-primary flex items-center gap-2 text-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                Add Question
+              </button>
+            }
+          </div>
+
+          <!-- Question list -->
+          @if (questions().length > 0 && !showQForm()) {
+            <div class="space-y-3">
+              @for (q of questions(); track $index; let i = $index) {
+                <div class="card p-4 flex items-start gap-4 group">
+                  <div class="w-8 h-8 rounded-lg bg-vroom-surface border border-vroom-border flex items-center justify-center flex-shrink-0 font-body font-bold text-vroom-muted tabular-nums text-sm">
+                    {{ i + 1 }}
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-vroom-text font-body text-sm leading-relaxed">{{ q.questionText }}</p>
+                    <div class="flex items-center gap-3 mt-2">
+                      <span class="text-xs font-mono text-vroom-muted bg-vroom-surface px-2 py-0.5 rounded-full">{{ typeLabel(q.type) }}</span>
+                      <span class="text-xs font-mono text-vroom-accent tabular-nums">{{ q.points }} pts</span>
+                      <span class="text-xs font-mono text-vroom-muted tabular-nums">{{ q.timeLimitSeconds }}s</span>
+                      @if (q.pinnedAt !== undefined) {
+                        <span class="text-xs font-mono text-blue-400 flex items-center gap-1">
+                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                          {{ formatTime(q.pinnedAt) }}
+                      </span>
+                      }
+                      <span class="text-xs font-mono text-vroom-muted">{{ q.answers.length }} answers</span>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button (click)="editQuestion(q, i)" class="btn-ghost text-xs py-1 px-2">Edit</button>
+                    <button (click)="deleteQuestion(q, i)" class="text-xs py-1 px-2 text-red-400 hover:bg-red-500/10 rounded transition-colors font-mono">Delete</button>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+
+          @if (questions().length === 0 && !showQForm()) {
+            <div class="card p-12 text-center">
+              <svg class="w-12 h-12 mx-auto mb-4 text-vroom-muted opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              <p class="text-vroom-muted font-body">No questions yet. Add your first question to get started.</p>
+              <button (click)="openNewQuestion()" class="btn-primary mt-4 text-sm">Add First Question</button>
+            </div>
+          }
+
+          <!-- ── Question form ─────────────────────────────── -->
+          @if (showQForm()) {
+            <div class="card p-6 border-vroom-accent/30 space-y-5" [formGroup]="questionForm">
+              <div class="flex items-center justify-between">
+                <h3 class="font-display font-semibold text-vroom-text">
+                  {{ editingQIndex() !== null ? 'Edit Question' : 'New Question' }}
+                </h3>
+                <button (click)="cancelQuestion()" class="text-vroom-muted hover:text-vroom-text transition-colors">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                  </svg>
+                </button>
+              </div>
+
+              <!-- Type + Points + Time limit -->
+              <div class="grid grid-cols-3 gap-4">
+                <div>
+                  <label class="block text-xs font-mono text-vroom-muted mb-2">Type</label>
+                  <select formControlName="type"
+                          class="w-full bg-vroom-surface border border-vroom-border rounded-lg px-3 py-2.5 text-vroom-text text-sm focus:outline-none focus:border-vroom-accent transition-colors font-mono">
+                    <option [value]="QuestionType.SINGLE_CHOICE">Single Choice</option>
+                    <option [value]="QuestionType.MULTIPLE_CHOICE">Multiple Choice</option>
+                    <option [value]="QuestionType.TRUE_FALSE">True / False</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs font-mono text-vroom-muted mb-2">Points</label>
+                  <input formControlName="points" type="number" min="1"
+                         class="w-full bg-vroom-surface border border-vroom-border rounded-lg px-3 py-2.5 text-vroom-text text-sm focus:outline-none focus:border-vroom-accent transition-colors font-body tabular-nums">
+                </div>
+                <div>
+                  <label class="block text-xs font-mono text-vroom-muted mb-2">Time Limit (sec)</label>
+                  <input formControlName="timeLimitSeconds" type="number" min="5"
+                         class="w-full bg-vroom-surface border border-vroom-border rounded-lg px-3 py-2.5 text-vroom-text text-sm focus:outline-none focus:border-vroom-accent transition-colors font-body tabular-nums">
+                </div>
+              </div>
+
+              <!-- Question text -->
+              <div>
+                <label class="block text-xs font-mono text-vroom-muted mb-2">Question <span class="text-vroom-accent">*</span></label>
+                <textarea formControlName="questionText" rows="3" placeholder="What should the driver do in this situation?"
+                          class="w-full bg-vroom-surface border border-vroom-border rounded-lg px-3 py-2.5 text-vroom-text text-sm placeholder-vroom-muted focus:outline-none focus:border-vroom-accent transition-colors font-body resize-none"
+                          [class.border-red-500]="hasError('q', 'questionText', 'required') || hasError('q', 'questionText', 'minlength')"></textarea>
+                @if (hasError('q', 'questionText', 'minlength')) {
+                  <p class="text-red-400 text-xs mt-1 font-mono">Minimum 10 characters</p>
+                }
+              </div>
+
+              <!-- Hint + Explanation -->
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-mono text-vroom-muted mb-2">Hint <span class="text-vroom-muted">(optional)</span></label>
+                  <input formControlName="hint" type="text" placeholder="Give a subtle clue…"
+                         class="w-full bg-vroom-surface border border-vroom-border rounded-lg px-3 py-2.5 text-vroom-text text-sm placeholder-vroom-muted focus:outline-none focus:border-vroom-accent transition-colors font-body">
+                </div>
+                <div>
+                  <label class="block text-xs font-mono text-vroom-muted mb-2">Explanation <span class="text-vroom-muted">(shown after answer)</span></label>
+                  <input formControlName="explanation" type="text" placeholder="Why this answer is correct…"
+                         class="w-full bg-vroom-surface border border-vroom-border rounded-lg px-3 py-2.5 text-vroom-text text-sm placeholder-vroom-muted focus:outline-none focus:border-vroom-accent transition-colors font-body">
+                </div>
+              </div>
+
+              <!-- Answers -->
+              <div>
+                <div class="flex items-center justify-between mb-3">
+                  <label class="text-xs font-mono text-vroom-muted">Answer Choices</label>
+                  @if (questionForm.get('type')?.value !== QuestionType.TRUE_FALSE) {
+                    <button (click)="addAnswer()" [disabled]="answersArray.length >= 6"
+                            class="text-xs font-mono text-vroom-accent hover:text-orange-400 transition-colors disabled:opacity-40">
+                      + Add answer
+                    </button>
+                  }
+                </div>
+                <div class="space-y-2" [formArrayName]="'answers'">
+                  @for (ctrl of answersArray.controls; track $index; let ai = $index) {
+                    <div [formGroupName]="ai" class="flex items-center gap-3">
+                      <!-- Correct toggle -->
+                      @if (questionForm.get('type')?.value === QuestionType.MULTIPLE_CHOICE) {
+                        <input type="checkbox" formControlName="isCorrect"
+                               class="w-4 h-4 accent-vroom-accent cursor-pointer flex-shrink-0">
+                      } @else {
+                        <button type="button" (click)="setSingleCorrect(ai)"
+                                [class]="ctrl.get('isCorrect')?.value
+                          ? 'w-4 h-4 rounded-full border-2 border-vroom-accent bg-vroom-accent flex-shrink-0'
+                          : 'w-4 h-4 rounded-full border-2 border-vroom-border flex-shrink-0 hover:border-vroom-accent/60 transition-colors'">
+                        </button>
+                      }
+                      <!-- Answer text -->
+                      <input type="text" formControlName="answerText"
+                             [placeholder]="ai === 0 ? 'Answer A…' : ai === 1 ? 'Answer B…' : ai === 2 ? 'Answer C…' : 'Answer D…'"
+                             class="flex-1 bg-vroom-surface border border-vroom-border rounded-lg px-3 py-2 text-vroom-text text-sm placeholder-vroom-muted focus:outline-none focus:border-vroom-accent transition-colors font-body"
+                             [class.border-red-500]="ctrl.get('answerText')?.invalid && ctrl.get('answerText')?.touched">
+                      <!-- Remove -->
+                      @if (answersArray.length > 2 && questionForm.get('type')?.value !== QuestionType.TRUE_FALSE) {
+                        <button (click)="removeAnswer(ai)" class="text-vroom-muted hover:text-red-400 transition-colors flex-shrink-0">
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                          </svg>
+                        </button>
+                      }
+                    </div>
+                  }
+                </div>
+                <p class="text-vroom-muted text-xs font-mono mt-2">
+                  @if (questionForm.get('type')?.value === QuestionType.MULTIPLE_CHOICE) {
+                    Check all correct answers
+                  } @else {
+                    Click the circle to mark the correct answer
+                  }
+                </p>
+              </div>
+
+              @if (questionError()) {
+                <p class="text-red-400 text-sm font-mono bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-3">{{ questionError() }}</p>
+              }
+
+              <div class="flex justify-end gap-3 pt-2">
+                <button (click)="cancelQuestion()" class="btn-secondary text-sm">Cancel</button>
+                <button (click)="saveQuestion()" [disabled]="isSavingQuestion()"
+                        class="btn-primary flex items-center gap-2 text-sm min-w-28 justify-center">
+                  @if (isSavingQuestion()) {
+                    <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                    </svg>
+                  }
+                  Save Question
+                </button>
+              </div>
+            </div>
+          }
+
+          @if (!showQForm()) {
+            <div class="flex items-center justify-between pt-2">
+              <button (click)="currentStep.set('video')" class="btn-secondary text-sm">Back</button>
+              <button (click)="proceedToTimeline()" [disabled]="questions().length === 0"
+                      class="btn-primary flex items-center gap-2 text-sm disabled:opacity-40">
+                Continue to Timeline
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+              </button>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- ════════════════════════════════════════════════════ -->
+      <!-- STEP 4 — TIMELINE                                   -->
+      <!-- ════════════════════════════════════════════════════ -->
+      @if (currentStep() === 'timeline') {
+        <div class="fade-in space-y-6">
+          <div>
+            <h2 class="text-lg font-display font-semibold text-vroom-text">Pin Questions to Timeline</h2>
+            <p class="text-vroom-muted text-sm font-mono mt-1">Scrub the video to a moment, drop a pin, then assign a question to it.</p>
+          </div>
+
+          <!-- No video fallback -->
+          @if (!selectedVideo()) {
+            <div class="card p-8 text-center">
+              <svg class="w-12 h-12 mx-auto mb-4 text-vroom-muted opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10l4.553-2.276A1 1 0 0121 8.723v6.554a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+              </svg>
+              <p class="text-vroom-muted font-body text-sm">No video attached. You can still pin questions manually.</p>
+              <div class="mt-4 space-y-2">
+                @for (q of questions(); track q.id; let qi = $index) {
+                  @if (q.pinnedAt === undefined) {
+                    <div class="flex items-center gap-3 text-left p-3 bg-vroom-surface rounded-lg border border-vroom-border">
+                      <span class="text-xs font-mono text-vroom-muted w-6 text-center tabular-nums">{{ qi + 1 }}</span>
+                      <p class="text-sm text-vroom-text flex-1 truncate font-body">{{ q.questionText }}</p>
+                      <span class="text-xs font-mono text-vroom-muted">Not pinned</span>
+                    </div>
+                  }
+                }
+              </div>
+            </div>
+          }
+
+          <!-- Video player + timeline -->
+          @if (selectedVideo()) {
+            <div class="card overflow-hidden">
+              <!-- Video element -->
+              <div class="relative bg-black">
+                <video #videoEl class="w-full max-h-72 object-contain"
+                       [src]="blobVideoUrl()"
+                       (loadedmetadata)="onVideoLoaded()"
+                       (timeupdate)="onTimeUpdate()"
+                       (ended)="onVideoEnded()">
+                </video>
+                <!-- Overlay play button -->
+                @if (!isPlaying()) {
+                  <button (click)="togglePlay()"
+                          class="absolute inset-0 flex items-center justify-center bg-black/30 hover:bg-black/20 transition-colors group">
+                    <div class="w-14 h-14 rounded-full bg-vroom-accent/90 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                      <svg class="w-6 h-6 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z"/>
+                      </svg>
+                    </div>
+                  </button>
+                }
+              </div>
+
+              <!-- Controls + timeline -->
+              <div class="p-4 space-y-3">
+                <!-- Playback controls -->
+                <div class="flex items-center gap-3">
+                  <button (click)="togglePlay()"
+                          class="w-8 h-8 rounded-full bg-vroom-surface border border-vroom-border flex items-center justify-center hover:border-vroom-accent/60 transition-colors">
+                    @if (isPlaying()) {
+                      <svg class="w-4 h-4 text-vroom-text" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+                      </svg>
+                    } @else {
+                      <svg class="w-4 h-4 text-vroom-text ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z"/>
+                      </svg>
+                    }
+                  </button>
+                  <span class="text-xs font-mono text-vroom-muted tabular-nums">
+                  {{ formatTime(currentTime()) }} / {{ formatTime(videoDuration()) }}
+                </span>
+                  <div class="flex-1"></div>
+                  <!-- Drop pin button -->
+                  <button (click)="dropPin()"
+                          class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-vroom-accent text-white text-xs font-mono hover:bg-orange-500 transition-colors shadow-[0_0_12px_rgba(255,77,28,0.3)]">
+                    <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                    </svg>
+                    Drop Pin at {{ formatTime(currentTime()) }}
+                  </button>
+                </div>
+
+                <!-- Scrubber timeline -->
+                <div #timelineEl (click)="seekFromTimeline($event)"
+                     class="relative h-8 bg-vroom-surface rounded-lg cursor-pointer overflow-visible border border-vroom-border group">
+                  <!-- Progress fill -->
+                  <div class="absolute left-0 top-0 bottom-0 bg-vroom-accent/20 rounded-lg transition-all pointer-events-none"
+                       [style.width.%]="videoDuration() ? (currentTime() / videoDuration()) * 100 : 0"></div>
+                  <!-- Playhead -->
+                  <div class="absolute top-0 bottom-0 w-0.5 bg-vroom-accent pointer-events-none transition-all"
+                       [style.left.%]="videoDuration() ? (currentTime() / videoDuration()) * 100 : 0"></div>
+                  <!-- Question pins -->
+                  @for (q of questions(); track q.id; let qi = $index) {
+                    @if (q.pinnedAt !== undefined) {
+                      <div (click)="$event.stopPropagation(); seekTo(q.pinnedAt!)"
+                           class="absolute top-1 bottom-1 w-1 rounded-full bg-blue-400 cursor-pointer hover:bg-blue-300 transition-colors z-10 group/pin"
+                           [style.left.%]="pinLeftPct(q.pinnedAt!)"
+                           [title]="'Q' + (qi+1) + ': ' + formatTime(q.pinnedAt!)">
+                        <div class="absolute -top-6 left-1/2 -translate-x-1/2 bg-vroom-dark border border-vroom-border rounded px-1.5 py-0.5 text-xs font-mono text-blue-300 whitespace-nowrap opacity-0 group-hover/pin:opacity-100 transition-opacity pointer-events-none">
+                          Q{{ qi + 1 }} · {{ formatTime(q.pinnedAt!) }}
+                        </div>
+                      </div>
+                    }
+                  }
+                  <!-- Pending pin indicator -->
+                  @if (pendingPin() !== null) {
+                    <div class="absolute top-0 bottom-0 w-0.5 bg-vroom-accent animate-pulse pointer-events-none z-20"
+                         [style.left.%]="pinLeftPct(pendingPin()!)"></div>
+                  }
+                </div>
+              </div>
+            </div>
+
+            <!-- Pending pin assignment panel -->
+            @if (pendingPin() !== null) {
+              <div class="card p-5 border-vroom-accent/40 space-y-3">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <div class="w-2 h-2 rounded-full bg-vroom-accent animate-pulse"></div>
+                    <span class="text-sm font-mono text-vroom-accent">Pin at {{ formatTime(pendingPin()!) }} — assign a question:</span>
+                  </div>
+                  <button (click)="cancelPin()" class="text-vroom-muted hover:text-vroom-text transition-colors text-xs font-mono">Cancel</button>
+                </div>
+                <div class="space-y-2">
+                  @for (q of questions(); track q.id; let qi = $index) {
+                    <button (click)="assignPin(q, qi)" [disabled]="isSavingPin()"
+                            class="w-full flex items-center gap-3 p-3 rounded-lg bg-vroom-surface border border-vroom-border hover:border-vroom-accent/40 text-left transition-all disabled:opacity-50">
+                      <span class="text-xs font-mono text-vroom-muted w-6 tabular-nums">{{ qi + 1 }}</span>
+                      <div class="flex-1 min-w-0">
+                        <p class="text-sm text-vroom-text font-body truncate">{{ q.questionText }}</p>
+                      </div>
+                      @if (q.pinnedAt !== undefined) {
+                        <span class="text-xs font-mono text-blue-400 flex items-center gap-1">
+                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                        Move from {{ formatTime(q.pinnedAt!) }}
+                      </span>
+                      } @else {
+                        <span class="text-xs font-mono text-vroom-muted">Unpinned</span>
+                      }
+                      @if (isSavingPin()) {
+                        <svg class="w-4 h-4 animate-spin text-vroom-accent" fill="none" viewBox="0 0 24 24">
+                          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                        </svg>
+                      }
+                    </button>
+                  }
+                </div>
+              </div>
+            }
+          }
+
+          <!-- Pinned summary list -->
+          @if (questions().length > 0) {
+            <div class="card p-5 space-y-3">
+              <h3 class="text-sm font-mono text-vroom-muted">Question Pin Status</h3>
+              <div class="space-y-2">
+                @for (q of questions(); track q.id; let qi = $index) {
+                  <div class="flex items-center gap-3">
+                    <span class="text-xs font-mono text-vroom-muted w-6 tabular-nums">{{ qi + 1 }}</span>
+                    <p class="text-sm text-vroom-text font-body flex-1 truncate">{{ q.questionText }}</p>
+                    @if (q.pinnedAt !== undefined) {
+                      <div class="flex items-center gap-2">
+                        <span class="text-xs font-mono text-blue-400 tabular-nums">{{ formatTime(q.pinnedAt) }}</span>
+                        <button (click)="removePin(q, qi)" class="text-vroom-muted hover:text-red-400 transition-colors text-xs font-mono">Remove</button>
+                      </div>
+                    } @else {
+                      <span class="text-xs font-mono text-vroom-muted italic">Not pinned</span>
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
+          @if (timelineError()) {
+            <p class="text-red-400 text-sm font-mono bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-3">{{ timelineError() }}</p>
+          }
+
+          <div class="flex items-center justify-between pt-2">
+            <button (click)="currentStep.set('questions')" class="btn-secondary text-sm">Back</button>
+            <button (click)="proceedToReview()"
+                    class="btn-primary flex items-center gap-2 text-sm">
+              Continue to Review
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      }
+
+      <!-- ════════════════════════════════════════════════════ -->
+      <!-- STEP 5 — REVIEW & PUBLISH                           -->
+      <!-- ════════════════════════════════════════════════════ -->
+      @if (currentStep() === 'review') {
+        <div class="fade-in space-y-6">
+
+          <!-- Published success -->
+          @if (saveSuccess()) {
+            <div class="card p-8 text-center border-green-500/30">
+              <div class="w-16 h-16 rounded-full bg-green-500/15 flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+              </div>
+              <h2 class="text-xl font-display font-bold text-vroom-text mb-2">Scenario Published!</h2>
+              <p class="text-vroom-muted font-body text-sm">Redirecting to your dashboard…</p>
+            </div>
+          }
+
+          @if (!saveSuccess()) {
+            <!-- Review summary -->
+            <div class="grid grid-cols-2 gap-4">
+              <!-- Metadata card -->
+              <div class="card p-5 space-y-4">
+                <div class="flex items-center justify-between">
+                  <h3 class="text-sm font-mono text-vroom-muted uppercase tracking-wider">Details</h3>
+                  <button (click)="currentStep.set('meta')" class="text-xs font-mono text-vroom-accent hover:text-orange-400 transition-colors">Edit</button>
+                </div>
+                @if (scenario()) {
+                  <div class="space-y-2">
+                    <p class="text-vroom-text font-body font-medium">{{ scenario()!.title }}</p>
+                    <p class="text-vroom-muted text-sm font-body leading-relaxed line-clamp-3">{{ scenario()!.description }}</p>
+                    <div class="flex flex-wrap gap-2 pt-1">
+                      <span [class]="'text-xs font-mono px-2 py-0.5 rounded-full bg-vroom-surface ' + diffColor(scenario()!.difficulty)">{{ scenario()!.difficulty }}</span>
+                      <span class="text-xs font-mono px-2 py-0.5 rounded-full bg-vroom-surface text-vroom-muted">{{ themeLabel(scenario()!.theme) }}</span>
+                      <span class="text-xs font-mono px-2 py-0.5 rounded-full bg-vroom-surface text-vroom-muted">Pass: {{ scenario()!.passingScore }}%</span>
+                    </div>
+                  </div>
+                }
+              </div>
+
+              <!-- Video + Questions summary -->
+              <div class="space-y-4">
+                <div class="card p-5">
+                  <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-sm font-mono text-vroom-muted uppercase tracking-wider">Video</h3>
+                    <button (click)="currentStep.set('video')" class="text-xs font-mono text-vroom-accent hover:text-orange-400 transition-colors">Edit</button>
+                  </div>
+                  @if (selectedVideo()) {
+                    <div class="flex items-center gap-3">
+                      <div class="w-8 h-8 rounded bg-vroom-surface flex items-center justify-center flex-shrink-0">
+                        <svg class="w-4 h-4 text-vroom-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                      </div>
+                      <div>
+                        <p class="text-sm text-vroom-text font-body truncate">{{ selectedVideo()!.title }}</p>
+                        <p class="text-xs text-green-400 font-mono">Ready</p>
+                      </div>
+                    </div>
+                  } @else {
+                    <p class="text-vroom-muted text-sm font-body italic">No video attached</p>
+                  }
+                </div>
+
+                <div class="card p-5">
+                  <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-sm font-mono text-vroom-muted uppercase tracking-wider">Questions</h3>
+                    <button (click)="currentStep.set('questions')" class="text-xs font-mono text-vroom-accent hover:text-orange-400 transition-colors">Edit</button>
+                  </div>
+                  <div class="flex gap-4">
+                    <div class="text-center">
+                      <p class="text-xl font-body font-bold text-vroom-text tabular-nums">{{ questions().length }}</p>
+                      <p class="text-xs font-mono text-vroom-muted">Questions</p>
+                    </div>
+                    <div class="text-center">
+                      <p class="text-xl font-body font-bold text-vroom-accent tabular-nums">{{ totalPoints() }}</p>
+                      <p class="text-xs font-mono text-vroom-muted">Total pts</p>
+                    </div>
+                    <div class="text-center">
+                      <p class="text-xl font-body font-bold text-blue-400 tabular-nums">{{ pinnedQuestions().length }}</p>
+                      <p class="text-xs font-mono text-vroom-muted">Pinned</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Question list preview -->
+            @if (questions().length > 0) {
+              <div class="card p-5 space-y-3">
+                <h3 class="text-sm font-mono text-vroom-muted uppercase tracking-wider">Question Preview</h3>
+                <div class="space-y-2">
+                  @for (q of questions(); track q.id; let qi = $index) {
+                    <div class="flex items-center gap-3 p-3 rounded-lg bg-vroom-surface border border-vroom-border">
+                      <span class="text-xs font-mono text-vroom-muted w-6 tabular-nums">{{ qi + 1 }}</span>
+                      <p class="text-sm text-vroom-text font-body flex-1 truncate">{{ q.questionText }}</p>
+                      <span class="text-xs font-mono text-vroom-muted">{{ typeLabel(q.type) }}</span>
+                      <span class="text-xs font-mono text-vroom-accent tabular-nums">{{ q.points }}pt</span>
+                      @if (q.pinnedAt !== undefined) {
+                        <span class="text-xs font-mono text-blue-400 tabular-nums">⏱ {{ formatTime(q.pinnedAt) }}</span>
+                      }
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+
+            <!-- Warnings -->
+            @if (questions().length === 0) {
+              <div class="flex items-start gap-3 p-4 rounded-lg bg-amber-500/10 border border-amber-500/25">
+                <svg class="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+                <p class="text-amber-300 text-sm font-body">No questions added yet. You can publish now and add questions later.</p>
+              </div>
+            }
+            @if (!selectedVideo()) {
+              <div class="flex items-start gap-3 p-4 rounded-lg bg-amber-500/10 border border-amber-500/25">
+                <svg class="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+                <p class="text-amber-300 text-sm font-body">No video attached. Students will see text-only questions.</p>
+              </div>
+            }
+
+            @if (publishError()) {
+              <p class="text-red-400 text-sm font-mono bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-3">{{ publishError() }}</p>
+            }
+
+            <div class="flex items-center justify-between pt-2">
+              <button (click)="saveDraftAndExit()" class="btn-ghost text-sm text-vroom-muted flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/>
+                </svg>
+                Save as Draft
+              </button>
+              <div class="flex gap-3">
+                <button (click)="currentStep.set('timeline')" class="btn-secondary text-sm">Back</button>
+                <button (click)="publishScenario()" [disabled]="isPublishing()"
+                        class="btn-primary flex items-center gap-2 text-sm min-w-36 justify-center shadow-[0_0_20px_rgba(255,77,28,0.3)]">
+                  @if (isPublishing()) {
+                    <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                    </svg>
+                    Publishing…
+                  } @else {
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
+                    </svg>
+                    Publish Scenario
+                  }
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      }
+
+    </div>
+  }<!-- end !isLoading -->
+</div>
