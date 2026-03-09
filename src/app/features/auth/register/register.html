@@ -1,0 +1,234 @@
+<div class="auth-layout">
+  <!-- Left Panel: Visual -->
+  <div class="auth-visual order-2 lg:order-1">
+    <div class="glow-orb w-80 h-80 bg-vroom-accent top-0 left-1/4 -translate-y-1/4 opacity-15"></div>
+    <div class="glow-orb w-72 h-72 bg-amber-500 bottom-0 right-1/4 translate-y-1/4 opacity-10"></div>
+
+    <div class="absolute inset-0" style="
+      background-image:
+        linear-gradient(rgba(255,77,28,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,77,28,0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+    "></div>
+
+    <div class="relative z-10 flex flex-col items-start justify-end w-full h-full px-12 pb-16">
+      <div class="mb-6">
+        <span class="badge-pill mb-4 inline-flex">
+          <span class="w-2 h-2 rounded-full bg-vroom-green animate-pulse"></span>
+          Join 10,000+ learners
+        </span>
+      </div>
+      <h2 class="text-4xl font-display font-bold text-vroom-text mb-4 leading-tight">
+        Start your journey<br/>
+        <span class="text-gradient">to the road</span>
+      </h2>
+      <p class="text-vroom-text-dim font-body max-w-xs leading-relaxed mb-8">
+        Interactive scenarios designed by certified instructors to prepare you for real-world driving.
+      </p>
+
+      <!-- Feature list -->
+      <div class="space-y-3">
+        @for (feature of features; track feature.text) {
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-lg bg-vroom-accent/10 border border-vroom-accent/20 flex items-center justify-center flex-shrink-0">
+              <svg class="w-4 h-4 text-vroom-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+            </div>
+            <span class="text-vroom-text-dim text-sm font-body">{{ feature.text }}</span>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Panel: Form -->
+  <div class="auth-panel order-1 lg:order-2 overflow-y-auto">
+    <div class="max-w-md w-full mx-auto animate-fade-in">
+
+      <!-- Logo -->
+      <a routerLink="/" class="vroom-logo inline-flex items-center gap-2 mb-10">
+        <span class="text-gradient">V</span>ROOM
+      </a>
+
+      <div class="mb-6 animate-slide-up animate-fill-both animate-delay-100">
+        <h1 class="text-3xl font-display font-bold text-vroom-text mb-2">Create account</h1>
+        <p class="text-vroom-text-dim font-body text-sm">Join Vroom and start learning today</p>
+      </div>
+
+      <!-- Error Alert -->
+      @if (errorMessage()) {
+        <div class="alert-error mb-5">{{ errorMessage() }}</div>
+      }
+
+      <!-- Role selector -->
+      <div class="grid grid-cols-2 gap-3 mb-6 animate-slide-up animate-fill-both animate-delay-100">
+        <button
+          type="button"
+          (click)="selectRole(Role.STUDENT)"
+          [class.border-vroom-accent]="selectedRole() === Role.STUDENT"
+          [class.bg-vroom-accent-glow]="selectedRole() === Role.STUDENT"
+          [class.text-vroom-text]="selectedRole() === Role.STUDENT"
+          [class.border-vroom-border]="selectedRole() !== Role.STUDENT"
+          [class.text-vroom-muted]="selectedRole() !== Role.STUDENT"
+          class="card p-4 text-center transition-all duration-200 hover:border-vroom-accent/50 cursor-pointer"
+        >
+          <div class="text-2xl mb-1">🎓</div>
+          <div class="font-display font-semibold text-sm">Student</div>
+          <div class="text-xs opacity-60 font-body mt-0.5">Learn & practice</div>
+        </button>
+        <button
+          type="button"
+          (click)="selectRole(Role.INSTRUCTOR)"
+          [class.border-vroom-accent]="selectedRole() === Role.INSTRUCTOR"
+          [class.bg-vroom-accent-glow]="selectedRole() === Role.INSTRUCTOR"
+          [class.text-vroom-text]="selectedRole() === Role.INSTRUCTOR"
+          [class.border-vroom-border]="selectedRole() !== Role.INSTRUCTOR"
+          [class.text-vroom-muted]="selectedRole() !== Role.INSTRUCTOR"
+          class="card p-4 text-center transition-all duration-200 hover:border-vroom-accent/50 cursor-pointer"
+        >
+          <div class="text-2xl mb-1">🏫</div>
+          <div class="font-display font-semibold text-sm">Instructor</div>
+          <div class="text-xs opacity-60 font-body mt-0.5">Create & teach</div>
+        </button>
+      </div>
+
+      <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="space-y-4 animate-slide-up animate-fill-both animate-delay-200">
+
+        <!-- Name row -->
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="label">First name</label>
+            <input
+              type="text"
+              formControlName="firstName"
+              placeholder="John"
+              [class.error]="f['firstName'].invalid && f['firstName'].touched"
+              class="input-field"
+            />
+            @if (f['firstName'].invalid && f['firstName'].touched) {
+              <p class="error-message text-xs mt-1">
+                @if (f['firstName'].errors?.['required']) { Required }
+                @else { Min 2 chars }
+              </p>
+            }
+          </div>
+          <div>
+            <label class="label">Last name</label>
+            <input
+              type="text"
+              formControlName="lastName"
+              placeholder="Doe"
+              [class.error]="f['lastName'].invalid && f['lastName'].touched"
+              class="input-field"
+            />
+            @if (f['lastName'].invalid && f['lastName'].touched) {
+              <p class="error-message text-xs mt-1">
+                @if (f['lastName'].errors?.['required']) { Required }
+                @else { Min 2 chars }
+              </p>
+            }
+          </div>
+        </div>
+
+        <!-- Email -->
+        <div>
+          <label class="label">Email address</label>
+          <input
+            type="email"
+            formControlName="email"
+            autocomplete="email"
+            placeholder="you@example.com"
+            [class.error]="f['email'].invalid && f['email'].touched"
+            class="input-field"
+          />
+          @if (f['email'].invalid && f['email'].touched) {
+            <p class="error-message">
+              @if (f['email'].errors?.['required']) { Email is required }
+              @else { Invalid email address }
+            </p>
+          }
+        </div>
+
+        <!-- Password -->
+        <div>
+          <label class="label">Password</label>
+          <div class="relative">
+            <input
+              [type]="showPassword() ? 'text' : 'password'"
+              formControlName="password"
+              autocomplete="new-password"
+              placeholder="Min 8 chars with uppercase, number & symbol"
+              [class.error]="f['password'].invalid && f['password'].touched"
+              class="input-field pr-12"
+            />
+            <button type="button" (click)="togglePassword()" class="absolute right-4 top-1/2 -translate-y-1/2 text-vroom-muted hover:text-vroom-text transition-colors">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+              </svg>
+            </button>
+          </div>
+          <!-- Password strength -->
+          @if (f['password'].value) {
+            <div class="mt-2">
+              <div class="flex gap-1 mb-1">
+                @for (i of [1,2,3,4]; track i) {
+                  <div class="h-1 flex-1 rounded-full transition-all duration-300"
+                       [class]="i <= getPasswordStrength().level ? getPasswordStrength().color : 'bg-vroom-border'">
+                  </div>
+                }
+              </div>
+              <span class="text-xs text-vroom-muted font-body">{{ getPasswordStrength().label }}</span>
+            </div>
+          }
+          @if (f['password'].invalid && f['password'].touched) {
+            <p class="error-message text-xs mt-1">Password must have uppercase, number & special character</p>
+          }
+        </div>
+
+        <!-- Confirm Password -->
+        <div>
+          <label class="label">Confirm password</label>
+          <input
+            type="password"
+            formControlName="confirmPassword"
+            autocomplete="new-password"
+            placeholder="Repeat your password"
+            [class.error]="(f['confirmPassword'].invalid || registerForm.errors?.['passwordMismatch']) && f['confirmPassword'].touched"
+            class="input-field"
+          />
+          @if (registerForm.errors?.['passwordMismatch'] && f['confirmPassword'].touched) {
+            <p class="error-message">Passwords do not match</p>
+          }
+        </div>
+
+        <!-- Submit -->
+        <button
+          type="submit"
+          [disabled]="isSubmitting()"
+          class="btn-primary w-full mt-2 flex items-center justify-center gap-2"
+        >
+          @if (isSubmitting()) {
+            <svg class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+            </svg>
+            Creating account...
+          } @else {
+            Create account
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+          }
+        </button>
+      </form>
+
+      <p class="mt-6 text-center text-vroom-text-dim font-body text-sm">
+        Already have an account?
+        <a routerLink="/auth/login" class="text-vroom-accent hover:text-vroom-accent-dim font-medium ml-1 transition-colors">
+          Sign in
+        </a>
+      </p>
+
+    </div>
+  </div>
+</div>

@@ -1,0 +1,178 @@
+<div class="auth-layout">
+  <!-- Left Panel: Form -->
+  <div class="auth-panel">
+    <div class="max-w-md w-full mx-auto animate-fade-in">
+
+      <!-- Logo -->
+      <a routerLink="/" class="vroom-logo inline-flex items-center gap-2 mb-12">
+        <span class="text-gradient">V</span>ROOM
+        <span class="text-vroom-accent text-sm font-mono font-normal ml-2 opacity-60">v2.0</span>
+      </a>
+
+      <!-- Header -->
+      <div class="mb-8 animate-slide-up animate-fill-both animate-delay-100">
+        <h1 class="text-3xl font-display font-bold text-vroom-text mb-2">
+          Welcome back
+        </h1>
+        <p class="text-vroom-text-dim font-body">
+          Sign in to continue your driving journey
+        </p>
+      </div>
+
+      <!-- Error Alert -->
+      @if (errorMessage()) {
+        <div class="alert-error mb-6 animate-slide-up animate-fill-both">
+          <svg class="w-4 h-4 inline mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+          </svg>
+          {{ errorMessage() }}
+        </div>
+      }
+
+      <!-- Form -->
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="space-y-5 animate-slide-up animate-fill-both animate-delay-200">
+
+        <!-- Email -->
+        <div>
+          <label for="email" class="label">Email address</label>
+          <input
+            id="email"
+            type="email"
+            formControlName="email"
+            autocomplete="email"
+            placeholder="you@example.com"
+            [class.error]="emailCtrl.invalid && emailCtrl.touched"
+            class="input-field"
+          />
+          @if (emailCtrl.invalid && emailCtrl.touched) {
+            <p class="error-message">
+              <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+              @if (emailCtrl.errors?.['required']) { Email is required }
+              @else if (emailCtrl.errors?.['email']) { Please enter a valid email }
+            </p>
+          }
+        </div>
+
+        <!-- Password -->
+        <div>
+          <div class="flex justify-between items-center mb-1.5">
+            <label for="password" class="label mb-0">Password</label>
+            <a routerLink="/auth/forgot-password" class="text-sm text-vroom-accent hover:text-vroom-accent-dim transition-colors font-body">
+              Forgot password?
+            </a>
+          </div>
+          <div class="relative">
+            <input
+              id="password"
+              [type]="showPassword() ? 'text' : 'password'"
+              formControlName="password"
+              autocomplete="current-password"
+              placeholder="Enter your password"
+              [class.error]="passwordCtrl.invalid && passwordCtrl.touched"
+              class="input-field pr-12"
+            />
+            <button
+              type="button"
+              (click)="togglePassword()"
+              class="absolute right-4 top-1/2 -translate-y-1/2 text-vroom-muted hover:text-vroom-text transition-colors"
+            >
+              @if (showPassword()) {
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/></svg>
+              } @else {
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+              }
+            </button>
+          </div>
+          @if (passwordCtrl.invalid && passwordCtrl.touched) {
+            <p class="error-message">
+              <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+              @if (passwordCtrl.errors?.['required']) { Password is required }
+              @else if (passwordCtrl.errors?.['minlength']) { Password must be at least 6 characters }
+            </p>
+          }
+        </div>
+
+        <!-- Submit -->
+        <button
+          type="submit"
+          [disabled]="isSubmitting()"
+          class="btn-primary w-full mt-2 flex items-center justify-center gap-2"
+        >
+          @if (isSubmitting()) {
+            <svg class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+            </svg>
+            Signing in...
+          } @else {
+            Sign in
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+          }
+        </button>
+      </form>
+
+      <!-- Footer -->
+      <p class="mt-8 text-center text-vroom-text-dim font-body text-sm animate-fade-in animate-fill-both animate-delay-300">
+        Don't have an account?
+        <a routerLink="/auth/register" class="text-vroom-accent hover:text-vroom-accent-dim font-medium ml-1 transition-colors">
+          Create one
+        </a>
+      </p>
+
+    </div>
+  </div>
+
+  <!-- Right Panel: Visual -->
+  <div class="auth-visual">
+    <!-- Background elements -->
+    <div class="glow-orb w-96 h-96 bg-vroom-accent top-1/4 right-0 translate-x-1/2"></div>
+    <div class="glow-orb w-64 h-64 bg-blue-500 bottom-1/4 left-0 -translate-x-1/2 opacity-10"></div>
+
+    <!-- Road grid overlay -->
+    <div class="absolute inset-0" style="
+      background-image:
+        linear-gradient(rgba(255,77,28,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,77,28,0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+    "></div>
+
+    <!-- Center content -->
+    <div class="relative z-10 flex flex-col items-center justify-center w-full h-full px-12 text-center">
+
+      <!-- Icon -->
+      <div class="w-24 h-24 rounded-3xl bg-vroom-accent/10 border border-vroom-accent/20 flex items-center justify-center mb-8 animate-pulse-accent">
+        <svg class="w-12 h-12 text-vroom-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+        </svg>
+      </div>
+
+      <h2 class="text-3xl font-display font-bold text-vroom-text mb-4">
+        Drive smarter,<br/>
+        <span class="text-gradient">not harder</span>
+      </h2>
+
+      <p class="text-vroom-text-dim font-body text-base max-w-sm leading-relaxed mb-10">
+        Master traffic scenarios, earn badges, and build real-world driving confidence — all before hitting the road.
+      </p>
+
+      <!-- Stats row -->
+      <div class="flex items-center gap-8">
+        <div class="text-center">
+          <div class="text-2xl font-display font-bold text-vroom-text">50+</div>
+          <div class="text-xs text-vroom-muted font-body mt-0.5">Scenarios</div>
+        </div>
+        <div class="w-px h-8 bg-vroom-border"></div>
+        <div class="text-center">
+          <div class="text-2xl font-display font-bold text-vroom-text">10k+</div>
+          <div class="text-xs text-vroom-muted font-body mt-0.5">Learners</div>
+        </div>
+        <div class="w-px h-8 bg-vroom-border"></div>
+        <div class="text-center">
+          <div class="text-2xl font-display font-bold text-vroom-text">96%</div>
+          <div class="text-xs text-vroom-muted font-body mt-0.5">Pass Rate</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
