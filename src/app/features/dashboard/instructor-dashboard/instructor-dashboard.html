@@ -1,0 +1,362 @@
+<div class="min-h-full bg-vroom-black">
+
+  <!-- ══ HEADER ══ -->
+  <div class="border-b border-vroom-border bg-vroom-dark px-6 lg:px-8 py-6">
+    <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
+      <div>
+        <div class="flex items-center gap-2 mb-1">
+          <div class="w-2 h-2 rounded-full bg-vroom-accent"></div>
+          <span class="text-xs font-mono text-vroom-muted uppercase tracking-widest">Instructor</span>
+        </div>
+        <h1 class="text-2xl font-display font-bold text-vroom-text">
+          Welcome back, {{ authService.currentUser()?.firstName }}
+        </h1>
+        <p class="text-vroom-text-dim font-body text-sm mt-0.5">Here's what's happening with your scenarios</p>
+      </div>
+      <button (click)="goToNew()"
+              class="btn-primary inline-flex items-center gap-2 text-sm flex-shrink-0">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
+        New Scenario
+      </button>
+    </div>
+  </div>
+
+  <div class="max-w-7xl mx-auto px-6 lg:px-8 py-8 space-y-8">
+
+    <!-- ══ ERROR ══ -->
+    @if (hasError()) {
+      <div class="flex flex-col items-center justify-center py-24 text-center">
+        <div class="text-5xl mb-4">⚠️</div>
+        <h2 class="font-display font-bold text-xl text-vroom-text mb-2">Couldn't load dashboard</h2>
+        <button (click)="load()" class="btn-primary mt-4 text-sm">Retry</button>
+      </div>
+    }
+
+    @else {
+
+      <!-- ══════════════════════════════════════
+        KPI CARDS
+      ══════════════════════════════════════ -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+
+        @if (isLoading()) {
+          @for (s of skeletons; track $index) {
+            <div class="card rounded-2xl p-5 animate-pulse space-y-3">
+              <div class="h-3 bg-vroom-surface rounded-full w-1/2"></div>
+              <div class="h-8 bg-vroom-surface rounded-full w-2/3"></div>
+              <div class="h-2 bg-vroom-surface rounded-full w-1/3"></div>
+            </div>
+          }
+        } @else {
+
+          <!-- Total Scenarios -->
+          <div class="card rounded-2xl p-5 animate-slide-up animate-fill-both">
+            <div class="flex items-start justify-between mb-3">
+              <div class="w-9 h-9 rounded-xl bg-vroom-accent/10 border border-vroom-accent/20 flex items-center justify-center text-lg">🎬</div>
+              <span class="text-xs font-body text-vroom-muted">Total</span>
+            </div>
+            <div class="text-3xl num-value text-vroom-text mb-1">{{ kpis().total }}</div>
+            <div class="text-sm font-body text-vroom-text-dim">Scenarios</div>
+            <div class="mt-3 flex items-center gap-2 text-xs font-body">
+              <span class="text-vroom-green">{{ kpis().published }} published</span>
+              <span class="text-vroom-border">·</span>
+              <span class="text-vroom-amber">{{ kpis().draft }} draft</span>
+            </div>
+          </div>
+
+          <!-- Published -->
+          <div class="card rounded-2xl p-5 animate-slide-up animate-fill-both" style="animation-delay:0.05s">
+            <div class="flex items-start justify-between mb-3">
+              <div class="w-9 h-9 rounded-xl bg-vroom-green/10 border border-vroom-green/20 flex items-center justify-center text-lg">✅</div>
+              <span class="text-xs font-body text-vroom-muted">Live</span>
+            </div>
+            <div class="text-3xl num-value text-vroom-green mb-1">{{ kpis().published }}</div>
+            <div class="text-sm font-body text-vroom-text-dim">Published</div>
+            <div class="mt-3 w-full h-1 bg-vroom-surface rounded-full overflow-hidden">
+              <div class="h-full bg-vroom-green rounded-full transition-all duration-700"
+                   [style.width.%]="kpis().total ? (kpis().published / kpis().total * 100) : 0">
+              </div>
+            </div>
+          </div>
+
+          <!-- Completions -->
+          <div class="card rounded-2xl p-5 animate-slide-up animate-fill-both" style="animation-delay:0.1s">
+            <div class="flex items-start justify-between mb-3">
+              <div class="w-9 h-9 rounded-xl bg-vroom-blue/10 border border-blue-500/20 flex items-center justify-center text-lg">👥</div>
+              <span class="text-xs font-body text-vroom-muted">All time</span>
+            </div>
+            <div class="text-3xl num-value text-vroom-text mb-1">{{ kpis().totalCompletions | number }}</div>
+            <div class="text-sm font-body text-vroom-text-dim">Completions</div>
+            @if (kpis().avgRating) {
+              <div class="mt-3 flex items-center gap-1 text-xs font-body text-vroom-amber">
+                <span>★</span>
+                <span>{{ kpis().avgRating }} avg rating</span>
+              </div>
+            }
+          </div>
+
+          <!-- Videos -->
+          <div class="card rounded-2xl p-5 animate-slide-up animate-fill-both" style="animation-delay:0.15s">
+            <div class="flex items-start justify-between mb-3">
+              <div class="w-9 h-9 rounded-xl bg-vroom-amber/10 border border-amber-500/20 flex items-center justify-center text-lg">🎥</div>
+              <span class="text-xs font-body text-vroom-muted">Library</span>
+            </div>
+            <div class="text-3xl num-value text-vroom-text mb-1">{{ kpis().videos }}</div>
+            <div class="text-sm font-body text-vroom-text-dim">Videos</div>
+            <div class="mt-3 text-xs font-body text-vroom-muted">
+              {{ kpis().readyVideos }} ready to use
+            </div>
+          </div>
+        }
+      </div>
+
+
+      <!-- ══════════════════════════════════════
+        MAIN CONTENT GRID
+      ══════════════════════════════════════ -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- ── Scenarios table (2/3) ── -->
+        <div class="lg:col-span-2 card rounded-2xl overflow-hidden">
+          <div class="px-6 py-5 border-b border-vroom-border flex items-center justify-between">
+            <div>
+              <h2 class="font-display font-semibold text-base text-vroom-text">My Scenarios</h2>
+              @if (!isLoading()) {
+                <p class="text-xs text-vroom-muted font-body mt-0.5">{{ scenarios().length }} total</p>
+              }
+            </div>
+            <a routerLink="/instructor/scenarios"
+               class="text-xs font-body text-vroom-accent hover:text-vroom-accent-dim transition-colors flex items-center gap-1">
+              View all
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+              </svg>
+            </a>
+          </div>
+
+          @if (isLoading()) {
+            <div class="divide-y divide-vroom-border">
+              @for (s of skeletons.concat(skeletons); track $index) {
+                <div class="flex items-center gap-4 px-6 py-4 animate-pulse">
+                  <div class="w-8 h-8 rounded-lg bg-vroom-surface flex-shrink-0"></div>
+                  <div class="flex-1 space-y-1.5">
+                    <div class="h-3.5 bg-vroom-surface rounded-full w-1/2"></div>
+                    <div class="h-2.5 bg-vroom-surface rounded-full w-1/4"></div>
+                  </div>
+                  <div class="h-6 w-16 bg-vroom-surface rounded-lg"></div>
+                </div>
+              }
+            </div>
+          } @else if (scenarios().length === 0) {
+            <div class="flex flex-col items-center justify-center py-16 text-center px-6">
+              <div class="text-4xl mb-3">🎬</div>
+              <h3 class="font-display font-semibold text-base text-vroom-text mb-1">No scenarios yet</h3>
+              <p class="text-vroom-text-dim font-body text-sm mb-5">Create your first scenario to get started.</p>
+              <button (click)="goToNew()" class="btn-primary text-sm inline-flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                Create Scenario
+              </button>
+            </div>
+          } @else {
+            <div class="divide-y divide-vroom-border">
+              @for (s of recentScenarios(); track s.id) {
+                <div class="group flex items-center gap-4 px-6 py-4 hover:bg-vroom-surface/30 transition-colors cursor-pointer"
+                     [routerLink]="['/instructor/scenarios', s.id, 'edit']">
+
+                  <!-- Theme icon -->
+                  <div class="w-9 h-9 rounded-xl bg-vroom-surface border border-vroom-border flex items-center justify-center text-base flex-shrink-0 group-hover:border-vroom-accent/30 transition-colors">
+                    {{ themeEmoji(s.theme) }}
+                  </div>
+
+                  <!-- Title + meta -->
+                  <div class="flex-1 min-w-0">
+                    <p class="font-body text-sm font-medium text-vroom-text truncate">{{ s.title }}</p>
+                    <div class="flex items-center gap-2 mt-0.5">
+                      <span class="text-xs font-body" [class]="difficultyColor(s.difficulty)">{{ s.difficulty }}</span>
+                      <span class="text-vroom-border text-xs">·</span>
+                      <span class="text-xs font-body text-vroom-muted">{{ relativeTime(s.updatedAt) }}</span>
+                      @if (s.completionCount > 0) {
+                        <span class="text-vroom-border text-xs">·</span>
+                        <span class="text-xs font-body text-vroom-muted">{{ s.completionCount | number }} completions</span>
+                      }
+                    </div>
+                  </div>
+
+                  <!-- Status badge -->
+                  <span class="text-xs font-body font-medium px-2 py-1 rounded-lg border flex-shrink-0 flex items-center gap-1.5"
+                        [class]="statusBadge(s.status)">
+                    <span class="w-1.5 h-1.5 rounded-full flex-shrink-0" [class]="statusDot(s.status)"
+                          [class.animate-pulse]="s.status === ScenarioStatus.PUBLISHED">
+                    </span>
+                    {{ s.status }}
+                  </span>
+
+                  <!-- Quick actions -->
+                  <div class="flex items-center gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <!-- Edit -->
+                    <button (click)="goToEditor(s.id, $event)"
+                            class="w-7 h-7 rounded-lg bg-vroom-surface border border-vroom-border flex items-center justify-center text-vroom-muted hover:text-vroom-text hover:border-vroom-accent/30 transition-all"
+                            title="Edit">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                      </svg>
+                    </button>
+                    <!-- Publish toggle -->
+                    <button (click)="togglePublish(s, $event)"
+                            [disabled]="publishingId() === s.id"
+                            class="w-7 h-7 rounded-lg bg-vroom-surface border border-vroom-border flex items-center justify-center transition-all disabled:opacity-50"
+                            [class.text-vroom-amber]="s.status !== ScenarioStatus.PUBLISHED"
+                            [class.text-vroom-green]="s.status === ScenarioStatus.PUBLISHED"
+                            [class.hover:border-vroom-green\30]="s.status !== ScenarioStatus.PUBLISHED"
+                    [class.hover:border-red-500\30]="s.status === ScenarioStatus.PUBLISHED"
+                    [title]="s.status === ScenarioStatus.PUBLISHED ? 'Unpublish' : 'Publish'">
+                    @if (publishingId() === s.id) {
+                      <svg class="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                      </svg>
+                    } @else if (s.status === ScenarioStatus.PUBLISHED) {
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+                      </svg>
+                    } @else {
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                      </svg>
+                    }
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+
+        <!-- ── Right column (1/3) ── -->
+        <div class="space-y-5">
+
+          <!-- Onboarding checklist -->
+          @if (!isLoading() && !checklistComplete()) {
+            <div class="card rounded-2xl overflow-hidden">
+              <div class="px-5 py-4 border-b border-vroom-border">
+                <div class="flex items-center justify-between mb-2">
+                  <h3 class="font-display font-semibold text-sm text-vroom-text">Get started</h3>
+                  <span class="text-xs font-mono text-vroom-accent">{{ checklistProgress() }}%</span>
+                </div>
+                <div class="w-full h-1.5 bg-vroom-surface rounded-full overflow-hidden">
+                  <div class="h-full bg-vroom-accent rounded-full transition-all duration-700"
+                       [style.width.%]="checklistProgress()">
+                  </div>
+                </div>
+              </div>
+              <div class="divide-y divide-vroom-border">
+                @for (step of checklist(); track step.id) {
+                  <div class="flex items-center gap-3 px-5 py-3.5">
+                    <div class="w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center border transition-colors"
+                         [class.bg-vroom-green]="step.done"
+                         [class.border-vroom-green]="step.done"
+                         [class.border-vroom-border]="!step.done">
+                      @if (step.done) {
+                        <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                        </svg>
+                      }
+                    </div>
+                    <span class="flex-1 text-xs font-body"
+                          [class.text-vroom-text-dim]="!step.done"
+                          [class.line-through]="step.done"
+                          [class.text-vroom-muted]="step.done">
+                      {{ step.label }}
+                    </span>
+                    @if (!step.done) {
+                      <a [routerLink]="step.route"
+                         class="text-xs font-body text-vroom-accent hover:underline flex-shrink-0">
+                        {{ step.cta }}
+                      </a>
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- Quick actions card -->
+          <div class="card rounded-2xl overflow-hidden">
+            <div class="px-5 py-4 border-b border-vroom-border">
+              <h3 class="font-display font-semibold text-sm text-vroom-text">Quick actions</h3>
+            </div>
+            <div class="divide-y divide-vroom-border">
+              @for (action of [
+                { route: '/instructor/scenarios/new', emoji: '✏️', label: 'New scenario',    desc: 'Start from scratch' },
+                { route: '/instructor/videos',        emoji: '📤', label: 'Upload video',     desc: 'Add to your library' },
+                { route: '/instructor/scenarios',     emoji: '📋', label: 'Manage scenarios', desc: 'Edit, publish, archive' },
+                { route: '/instructor/students',      emoji: '👥', label: 'View students',    desc: 'Track learner progress' },
+                { route: '/instructor/analytics',     emoji: '📊', label: 'Analytics',        desc: 'Class performance data' },
+              ]; track action.route) {
+                <a [routerLink]="action.route"
+                   class="flex items-center gap-3 px-5 py-3 hover:bg-vroom-surface/40 transition-colors group">
+                  <span class="text-base">{{ action.emoji }}</span>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-body font-medium text-vroom-text">{{ action.label }}</p>
+                    <p class="text-xs font-body text-vroom-muted">{{ action.desc }}</p>
+                  </div>
+                  <svg class="w-3.5 h-3.5 text-vroom-muted group-hover:text-vroom-accent group-hover:translate-x-0.5 transition-all flex-shrink-0"
+                       fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                  </svg>
+                </a>
+              }
+            </div>
+          </div>
+
+          <!-- Video library preview -->
+          @if (!isLoading() && videos().length > 0) {
+            <div class="card rounded-2xl overflow-hidden">
+              <div class="px-5 py-4 border-b border-vroom-border flex items-center justify-between">
+                <h3 class="font-display font-semibold text-sm text-vroom-text">Recent videos</h3>
+                <a routerLink="/instructor/videos" class="text-xs font-body text-vroom-accent hover:underline">View all</a>
+              </div>
+              <div class="divide-y divide-vroom-border">
+                @for (v of videos().slice(0, 4); track v.id) {
+                  <div class="flex items-center gap-3 px-5 py-3">
+                    <div class="w-8 h-8 rounded-lg bg-vroom-surface border border-vroom-border flex items-center justify-center flex-shrink-0">
+                      @if (v.status === VideoStatus.READY) {
+                        <svg class="w-3.5 h-3.5 text-vroom-green" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                      } @else if (v.status === VideoStatus.PROCESSING) {
+                        <svg class="w-3.5 h-3.5 text-vroom-amber animate-spin" fill="none" viewBox="0 0 24 24">
+                          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                        </svg>
+                      } @else {
+                        <svg class="w-3.5 h-3.5 text-vroom-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.069A1 1 0 0121 8.82v6.36a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                        </svg>
+                      }
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <p class="text-xs font-body font-medium text-vroom-text truncate">{{ v.title }}</p>
+                      <p class="text-xs font-body text-vroom-muted">{{ v.formattedFileSize }}</p>
+                    </div>
+                    <span class="text-xs font-mono flex-shrink-0"
+                          [class.text-vroom-green]="v.status === VideoStatus.READY"
+                          [class.text-vroom-amber]="v.status === VideoStatus.PROCESSING"
+                          [class.text-vroom-muted]="v.status !== VideoStatus.READY && v.status !== VideoStatus.PROCESSING">
+                      {{ v.status }}
+                    </span>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
+        </div>
+      </div>
+
+    }
+  </div>
+</div>

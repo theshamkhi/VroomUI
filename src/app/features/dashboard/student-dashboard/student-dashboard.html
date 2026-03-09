@@ -1,0 +1,408 @@
+<div class="min-h-screen">
+
+  <!-- ═══════════ LOADING ═══════════ -->
+  @if (isLoading()) {
+    <div class="flex items-center justify-center min-h-screen">
+      <div class="flex flex-col items-center gap-4">
+        <div class="w-12 h-12 rounded-2xl bg-vroom-accent/10 border border-vroom-accent/20 flex items-center justify-center animate-pulse-accent">
+          <svg class="w-6 h-6 text-vroom-accent animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+          </svg>
+        </div>
+        <p class="text-vroom-text-dim font-body text-sm">Loading your dashboard...</p>
+      </div>
+    </div>
+  }
+
+  @else if (hasError()) {
+    <!-- ═══════════ ERROR ═══════════ -->
+    <div class="flex items-center justify-center min-h-screen px-6">
+      <div class="text-center max-w-sm">
+        <div class="text-5xl mb-4">⚠️</div>
+        <h2 class="font-display font-bold text-xl text-vroom-text mb-2">Couldn't load dashboard</h2>
+        <p class="text-vroom-text-dim font-body text-sm mb-6">There was a problem connecting to the server.</p>
+        <button (click)="retry()" class="btn-primary">Try again</button>
+      </div>
+    </div>
+  }
+
+  @else {
+    <!-- ═══════════ MAIN CONTENT ═══════════ -->
+    <div class="max-w-7xl mx-auto px-4 lg:px-8 py-8 space-y-8 animate-fade-in">
+
+      <!-- ─── GREETING BANNER ─── -->
+      <div class="relative overflow-hidden rounded-2xl bg-vroom-dark border border-vroom-border px-6 py-6 lg:px-8 lg:py-7">
+        <!-- Background glow -->
+        <div class="absolute top-0 right-0 w-80 h-80 bg-vroom-accent blur-[120px] opacity-[0.06] pointer-events-none"></div>
+        <!-- Road grid -->
+        <div class="absolute inset-0 opacity-[0.03] pointer-events-none" style="
+          background-image: linear-gradient(rgba(255,77,28,1) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255,77,28,1) 1px, transparent 1px);
+          background-size: 40px 40px;
+        "></div>
+
+        <div class="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+          <div>
+            <p class="text-vroom-muted font-body text-sm mb-1">{{ greeting() }},</p>
+            <h1 class="text-2xl lg:text-3xl font-display font-bold text-vroom-text">
+              {{ authService.currentUser()?.firstName }}
+              <span class="text-vroom-accent"> {{ authService.currentUser()?.lastName }}</span>
+            </h1>
+            <p class="text-vroom-text-dim font-body text-sm mt-2">
+              @if (inProgressCount() > 0) {
+                You have <span class="text-vroom-amber font-medium">{{ inProgressCount() }} scenario{{ inProgressCount() !== 1 ? 's' : '' }} in progress.</span> Keep going!
+              } @else if (completedCount() === 0) {
+                Welcome to Vroom! Pick a scenario below to get started.
+              } @else {
+                You've completed <span class="text-vroom-green font-medium">{{ completedCount() }} scenario{{ completedCount() !== 1 ? 's' : '' }}</span> so far.
+              }
+            </p>
+          </div>
+
+          <!-- Level badge -->
+          <div class="flex items-center gap-4 bg-vroom-surface border border-vroom-border rounded-xl px-5 py-4 flex-shrink-0">
+            <!-- Circular progress via conic-gradient - no SVG mask conflicts -->
+            <div class="relative w-16 h-16 flex-shrink-0">
+              <div class="w-16 h-16 rounded-full"
+                   [style]="'background: conic-gradient(#FF4D1C ' + levelProgress() + '%, #1E1E2E ' + levelProgress() + '%); padding: 5px;'">
+                <div class="w-full h-full rounded-full bg-vroom-surface flex items-center justify-center">
+                  <span class="text-lg num-value text-vroom-text leading-none">{{ currentLevel() }}</span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <div class="font-display font-semibold text-vroom-text">Level {{ currentLevel() }}</div>
+              <div class="text-xs text-vroom-muted font-body mt-0.5">{{ pointsToNextLevel() }} pts to next</div>
+              <div class="text-xs text-vroom-accent num-value mt-1">{{ totalPoints() }} total pts</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- ─── STAT CARDS ROW ─── -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+
+        <!-- Completed -->
+        <div class="card rounded-2xl p-5 animate-slide-up animate-fill-both animate-delay-100">
+          <div class="flex items-start justify-between mb-4">
+            <div class="w-10 h-10 rounded-xl bg-vroom-green/10 border border-vroom-green/20 flex items-center justify-center">
+              <svg class="w-5 h-5 text-vroom-green" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <span class="text-xs font-body text-vroom-muted">Total</span>
+          </div>
+          <div class="text-2xl num-value text-vroom-text">{{ completedCount() }}</div>
+          <div class="text-sm font-body text-vroom-text-dim">Completed</div>
+        </div>
+
+        <!-- In Progress -->
+        <div class="card rounded-2xl p-5 animate-slide-up animate-fill-both animate-delay-200">
+          <div class="flex items-start justify-between mb-4">
+            <div class="w-10 h-10 rounded-xl bg-vroom-amber/10 border border-amber-500/20 flex items-center justify-center">
+              <svg class="w-5 h-5 text-vroom-amber" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <span class="text-xs font-body text-vroom-muted">Active</span>
+          </div>
+          <div class="text-2xl num-value text-vroom-text mb-1">{{ inProgressCount() }}</div>
+          <div class="text-sm font-body text-vroom-text-dim">In Progress</div>
+        </div>
+
+        <!-- Avg Score -->
+        <div class="card rounded-2xl p-5 animate-slide-up animate-fill-both animate-delay-300">
+          <div class="flex items-start justify-between mb-4">
+            <div class="w-10 h-10 rounded-xl bg-vroom-blue/10 border border-blue-500/20 flex items-center justify-center">
+              <svg class="w-5 h-5 text-vroom-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            </div>
+            <span class="text-xs font-body text-vroom-muted">Average</span>
+          </div>
+          <div class="text-2xl num-value mb-1" [class]="scoreColor(averageScore())">
+            {{ averageScore() > 0 ? averageScore() + '%' : '—' }}
+          </div>
+          <div class="text-sm font-body text-vroom-text-dim">Avg Score</div>
+        </div>
+
+        <!-- Badges -->
+        <div class="card rounded-2xl p-5 animate-slide-up animate-fill-both animate-delay-400">
+          <div class="flex items-start justify-between mb-4">
+            <div class="w-10 h-10 rounded-xl bg-vroom-accent/10 border border-vroom-accent/20 flex items-center justify-center">
+              <svg class="w-5 h-5 text-vroom-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
+            </div>
+            <span class="text-xs font-body text-vroom-muted">Earned</span>
+          </div>
+          <div class="text-2xl num-value text-vroom-text mb-1">{{ badges().length }}</div>
+          <div class="text-sm font-body text-vroom-text-dim">Badges</div>
+        </div>
+      </div>
+
+
+      <!-- ─── MAIN GRID: Continue + Activity ─── -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- Continue / Suggested (2/3 width) -->
+        <div class="lg:col-span-2 space-y-6">
+
+          <!-- Continue where you left off -->
+          @if (inProgressScenarios().length > 0) {
+            @let prog = inProgressScenarios()[0];
+            <div class="relative overflow-hidden rounded-2xl bg-vroom-dark border border-vroom-amber/30 p-6">
+              <div class="absolute top-0 right-0 w-48 h-48 bg-vroom-amber blur-[80px] opacity-[0.05] pointer-events-none"></div>
+              <div class="relative z-10">
+                <div class="flex items-center gap-2 mb-4">
+                  <span class="w-2 h-2 rounded-full bg-vroom-amber animate-pulse"></span>
+                  <span class="text-xs font-body font-medium text-vroom-amber uppercase tracking-wide">Continue where you left off</span>
+                </div>
+                <h3 class="font-display font-bold text-lg text-vroom-text mb-1">
+                  {{ prog.scenarioTitle ?? 'Untitled Scenario' }}
+                </h3>
+                <div class="flex items-center gap-4 text-sm text-vroom-muted font-body mb-4">
+                  <span>Attempt #{{ prog.attemptCount }}</span>
+                  <span>{{ prog.completionPercentage }}% complete</span>
+                  <span>Last: {{ relativeTime(prog.lastAccessedAt) }}</span>
+                </div>
+                <!-- Progress bar -->
+                <div class="w-full h-1.5 bg-vroom-surface rounded-full mb-5 overflow-hidden">
+                  <div class="h-full bg-vroom-amber rounded-full transition-all duration-700"
+                       [style.width.%]="prog.completionPercentage"></div>
+                </div>
+                <a [routerLink]="['/scenarios', prog.scenarioId]" class="btn-primary inline-flex items-center gap-2 text-sm">
+                  Resume scenario
+                  <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                </a>
+              </div>
+            </div>
+          }
+
+          <!-- Suggested scenarios -->
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="font-display font-bold text-lg text-vroom-text">
+                @if (inProgressScenarios().length > 0) { Up next } @else { Start learning }
+              </h2>
+              <a routerLink="/scenarios" class="text-sm text-vroom-accent hover:text-vroom-accent-dim font-body transition-colors flex items-center gap-1">
+                View all
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+              </a>
+            </div>
+
+            @if (scenariosError()) {
+              <div class="card rounded-2xl p-6 text-center">
+                <div class="text-3xl mb-3">⚠️</div>
+                <p class="font-display font-semibold text-sm text-vroom-text mb-1">Couldn't load scenarios</p>
+                <button (click)="retry()" class="text-vroom-accent text-xs font-body mt-1 hover:underline">Retry</button>
+              </div>
+            } @else if (suggestedScenarios().length === 0 && popularScenarios().length > 0) {
+              <!-- Only show this if scenarios loaded successfully but all were started -->
+              <div class="card rounded-2xl p-8 text-center">
+                <div class="text-4xl mb-3">🏆</div>
+                <p class="font-display font-semibold text-vroom-text mb-1">You're crushing it!</p>
+                <p class="text-vroom-text-dim font-body text-sm">You've tried all popular scenarios. Explore the full library.</p>
+                <a routerLink="/scenarios" class="btn-secondary inline-flex items-center gap-2 mt-4 text-sm">Browse scenarios</a>
+              </div>
+            } @else {
+              <div class="space-y-3">
+                @for (s of suggestedScenarios(); track s.id) {
+                  <div class="card-hover rounded-xl p-4 flex items-center gap-4 group">
+                    <!-- Emoji icon -->
+                    <div class="w-12 h-12 rounded-xl bg-vroom-surface border border-vroom-border flex items-center justify-center text-2xl flex-shrink-0 group-hover:border-vroom-accent/30 transition-colors">
+                      🚗
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <div class="font-body font-medium text-vroom-text text-sm truncate mb-1">{{ s.title }}</div>
+                      <div class="flex items-center gap-3 text-xs text-vroom-muted font-body">
+                        <span class="font-mono" [class]="difficultyColor(s.difficulty)">{{ s.difficulty }}</span>
+                        <span>⏱ {{ formatDuration(s.durationSeconds) }}</span>
+                        <span>✦ {{ s.maxPoints }} pts</span>
+                      </div>
+                    </div>
+                    <a [routerLink]="['/scenarios', s.id]"
+                       class="flex-shrink-0 w-9 h-9 rounded-xl bg-vroom-surface border border-vroom-border hover:bg-vroom-accent hover:border-vroom-accent flex items-center justify-center transition-all duration-200 group/btn">
+                      <svg class="w-4 h-4 text-vroom-muted group-hover/btn:text-white transition-colors" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                    </a>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+
+
+        <!-- Right column: Activity feed -->
+        <div class="space-y-6">
+
+          <!-- Recent Activity -->
+          <div class="card rounded-2xl p-5">
+            <h2 class="font-display font-bold text-base text-vroom-text mb-4">Recent Activity</h2>
+
+            @if (progressError()) {
+              <div class="text-center py-6">
+                <div class="text-2xl mb-2">⚠️</div>
+                <p class="text-vroom-text-dim font-body text-xs">Couldn't load progress data.</p>
+                <button (click)="retry()" class="text-vroom-accent text-xs font-body mt-2 hover:underline">Retry</button>
+              </div>
+            } @else if (recentActivity().length === 0) {
+              <div class="text-center py-6">
+                <div class="text-3xl mb-2">🛣️</div>
+                <p class="text-vroom-text-dim font-body text-xs">No activity yet.<br/>Start a scenario!</p>
+              </div>
+            } @else {
+              <div class="space-y-3">
+                @for (p of recentActivity(); track p.id) {
+                  <div class="flex items-start gap-3">
+                    <!-- Status dot -->
+                    <div class="mt-1.5 flex-shrink-0">
+                      <div class="w-2 h-2 rounded-full" [class]="statusDot(p.status)"></div>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <div class="font-body text-xs font-medium text-vroom-text truncate">
+                        {{ p.scenarioTitle ?? 'Scenario' }}
+                      </div>
+                      <div class="flex items-center gap-2 mt-0.5">
+                        <span class="text-xs font-body" [class]="statusColor(p.status)">{{ statusLabel(p.status) }}</span>
+                        @if (p.status !== CompletionStatus.IN_PROGRESS) {
+                          <span class="text-xs font-mono font-medium" [class]="scoreColor(p.highestScore)">{{ p.highestScore }}%</span>
+                        }
+                        <span class="text-xs text-vroom-muted font-body ml-auto">{{ relativeTime(p.lastAccessedAt) }}</span>
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+
+            <a routerLink="/progress" class="mt-4 pt-4 border-t border-vroom-border flex items-center justify-center gap-1 text-xs text-vroom-muted hover:text-vroom-accent font-body transition-colors">
+              Full progress report
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            </a>
+          </div>
+
+          <!-- Badges strip -->
+          <div class="card rounded-2xl p-5">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="font-display font-bold text-base text-vroom-text">My Badges</h2>
+              <a routerLink="/badges" class="text-xs text-vroom-accent hover:text-vroom-accent-dim font-body transition-colors">View all</a>
+            </div>
+
+            @if (badgesError()) {
+              <div class="text-center py-4">
+                <p class="text-vroom-text-dim font-body text-xs">Couldn't load badges.</p>
+                <button (click)="retry()" class="text-vroom-accent text-xs font-body mt-1 hover:underline">Retry</button>
+              </div>
+            } @else if (badges().length === 0) {
+              <div class="text-center py-4">
+                <div class="text-3xl mb-2">🏅</div>
+                <p class="text-vroom-text-dim font-body text-xs">Complete scenarios to earn badges</p>
+              </div>
+            } @else {
+              <div class="flex flex-wrap gap-2">
+                @for (sb of badges().slice(0, 6); track sb.id) {
+                  <div class="group relative">
+                    <div class="w-12 h-12 rounded-xl bg-vroom-surface border border-vroom-border flex items-center justify-center text-2xl hover:border-vroom-accent/40 transition-colors cursor-default">
+                      @if (sb.badge.iconUrl) {
+                        <img [src]="sb.badge.iconUrl" [alt]="sb.badge.name" class="w-7 h-7 object-contain"/>
+                      } @else {
+                        🏅
+                      }
+                    </div>
+                    <!-- Tooltip -->
+                    <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-vroom-card border border-vroom-border rounded-lg text-xs font-body text-vroom-text whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                      {{ sb.badge.name }}
+                    </div>
+                  </div>
+                }
+                @if (badges().length > 6) {
+                  <div class="w-12 h-12 rounded-xl bg-vroom-surface border border-vroom-border flex items-center justify-center text-xs font-mono text-vroom-muted">
+                    +{{ badges().length - 6 }}
+                  </div>
+                }
+              </div>
+            }
+          </div>
+
+        </div>
+      </div>
+
+
+      <!-- ─── POPULAR SCENARIOS GRID ─── -->
+      @if (scenariosError()) {
+        <div class="card rounded-2xl p-8 text-center">
+          <div class="text-3xl mb-3">⚠️</div>
+          <p class="font-display font-semibold text-vroom-text mb-1">Couldn't load scenarios</p>
+          <p class="text-vroom-text-dim font-body text-sm mb-4">The server returned an error. Your progress data is unaffected.</p>
+          <button (click)="retry()" class="btn-secondary text-sm inline-flex items-center gap-2">Retry</button>
+        </div>
+      } @else if (popularScenarios().length > 0) {
+        <div>
+          <div class="flex items-center justify-between mb-5">
+            <div>
+              <h2 class="font-display font-bold text-xl text-vroom-text">Popular Scenarios</h2>
+              <p class="text-vroom-text-dim font-body text-sm mt-0.5">Most completed by other students</p>
+            </div>
+            <a routerLink="/scenarios" class="btn-secondary text-sm py-2 px-4 inline-flex items-center gap-1.5">
+              Browse all
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            </a>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            @for (s of popularScenarios().slice(0, 8); track s.id; let i = $index) {
+              <!-- Find user's progress for this scenario -->
+              @let prog = progressList() | progressForScenario : s.id;
+              <a [routerLink]="['/scenarios', s.id]"
+                 class="card-hover rounded-2xl overflow-hidden flex flex-col group cursor-pointer">
+                <!-- Thumbnail / header area -->
+                <div class="relative h-28 bg-gradient-to-br from-vroom-surface to-vroom-card flex items-center justify-center overflow-hidden">
+                  <div class="text-5xl opacity-60 group-hover:scale-110 transition-transform duration-300">🚗</div>
+                  <!-- Difficulty badge -->
+                  <div class="absolute top-2 left-2">
+                    <span class="text-xs font-mono font-semibold px-2 py-0.5 rounded-full border" [class]="difficultyBg(s.difficulty) + ' ' + difficultyColor(s.difficulty)">
+                      {{ s.difficulty }}
+                    </span>
+                  </div>
+                  <!-- Completion overlay -->
+                  @if (prog && (prog.status === 'COMPLETED_PASSED' || prog.status === 'COMPLETED_FAILED')) {
+                    <div class="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center"
+                         [class.bg-vroom-green]="prog.status === 'COMPLETED_PASSED'"
+                         [class.bg-red-500]="prog.status === 'COMPLETED_FAILED'">
+                      <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                      </svg>
+                    </div>
+                  }
+                  @if (prog && prog.status === 'IN_PROGRESS') {
+                    <div class="absolute top-2 right-2">
+                      <div class="w-2 h-2 rounded-full bg-vroom-amber animate-pulse"></div>
+                    </div>
+                  }
+                </div>
+
+                <!-- Card body -->
+                <div class="p-4 flex-1 flex flex-col">
+                  <h3 class="font-body font-semibold text-sm text-vroom-text mb-1 line-clamp-2 flex-1">{{ s.title }}</h3>
+                  <div class="flex items-center gap-3 mt-3 text-xs text-vroom-muted font-body">
+                    <span class="flex items-center gap-1">
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                      {{ formatDuration(s.durationSeconds) }}
+                    </span>
+                    <span class="flex items-center gap-1">✦ {{ s.maxPoints }}pts</span>
+                    @if (s.completionCount > 0) {
+                      <span class="ml-auto">{{ s.completionCount }} done</span>
+                    }
+                  </div>
+                  <!-- Progress bar for in-progress -->
+                  @if (prog && prog.status === 'IN_PROGRESS') {
+                    <div class="mt-2 h-1 bg-vroom-surface rounded-full overflow-hidden">
+                      <div class="h-full bg-vroom-amber rounded-full" [style.width.%]="prog.completionPercentage"></div>
+                    </div>
+                  }
+                </div>
+              </a>
+            }
+          </div>
+        </div>
+      }
+
+    </div>
+  }
+
+</div>
