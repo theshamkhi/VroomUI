@@ -1,0 +1,423 @@
+<div class="min-h-full bg-vroom-black">
+
+  <!-- ══ HEADER ══ -->
+  <div class="border-b border-vroom-border bg-vroom-dark px-6 lg:px-8 py-6">
+    <div class="max-w-4xl mx-auto">
+      <h1 class="text-2xl font-display font-bold text-vroom-text">Settings</h1>
+      <p class="text-vroom-text-dim font-body text-sm mt-0.5">Manage your account and preferences</p>
+    </div>
+  </div>
+
+  <div class="max-w-4xl mx-auto px-6 lg:px-8 py-8">
+    <div class="flex flex-col lg:flex-row gap-8">
+
+      <!-- ══════════════════════════════════════
+        SIDEBAR — profile card + tabs
+      ══════════════════════════════════════ -->
+      <div class="lg:w-64 flex-shrink-0 space-y-4">
+
+        <!-- Profile card -->
+        <div class="card rounded-2xl p-5 text-center">
+          <!-- Avatar -->
+          <div class="relative inline-block mb-3">
+            @if (user()?.profilePicture) {
+              <img [src]="user()!.profilePicture" [alt]="fullName()"
+                   class="w-20 h-20 rounded-2xl object-cover ring-2 ring-vroom-border"/>
+            } @else {
+              <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-vroom-accent/20 to-vroom-accent/5 border border-vroom-accent/20 flex items-center justify-center">
+                <span class="text-2xl font-display font-bold text-vroom-accent">{{ initials() }}</span>
+              </div>
+            }
+            <!-- Verified dot -->
+            @if (user()?.emailVerified) {
+              <div class="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-vroom-green border-2 border-vroom-dark flex items-center justify-center"
+                   title="Email verified">
+                <svg class="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                </svg>
+              </div>
+            }
+          </div>
+
+          @if (isLoadingUser()) {
+            <div class="space-y-2 animate-pulse">
+              <div class="h-4 bg-vroom-surface rounded-full w-3/4 mx-auto"></div>
+              <div class="h-3 bg-vroom-surface rounded-full w-1/2 mx-auto"></div>
+            </div>
+          } @else {
+            <h3 class="font-display font-semibold text-vroom-text text-base leading-tight">{{ fullName() }}</h3>
+            <p class="text-vroom-muted font-body text-xs mt-1 truncate">{{ user()?.email }}</p>
+            <div class="mt-3 flex justify-center">
+              <span class="text-xs font-body font-medium px-2.5 py-1 rounded-lg border" [class]="roleBadge().cls">
+                {{ roleBadge().label }}
+              </span>
+            </div>
+          }
+
+          <!-- Stats strip -->
+          @if (progressStats()) {
+            <div class="mt-4 pt-4 border-t border-vroom-border grid grid-cols-3 gap-2 text-center">
+              <div>
+                <div class="text-base num-value text-vroom-text">{{ progressStats()!.total }}</div>
+                <div class="text-xs font-body text-vroom-muted leading-tight">Tried</div>
+              </div>
+              <div>
+                <div class="text-base num-value text-vroom-green">{{ progressStats()!.passed }}</div>
+                <div class="text-xs font-body text-vroom-muted leading-tight">Passed</div>
+              </div>
+              <div>
+                <div class="text-base num-value text-vroom-accent">{{ progressStats()!.totalPts | number }}</div>
+                <div class="text-xs font-body text-vroom-muted leading-tight">Points</div>
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- Tab nav -->
+        <nav class="card rounded-2xl overflow-hidden">
+          @for (tab of [
+            { key: 'profile',  label: 'Profile',  emoji: '👤' },
+            { key: 'security', label: 'Security', emoji: '🔒' },
+            { key: 'account',  label: 'Account',  emoji: '⚙️' }
+          ]; track tab.key) {
+            <button (click)="setTab(tab.key)"
+                    class="w-full flex items-center gap-3 px-4 py-3 text-sm font-body transition-colors text-left border-b border-vroom-border last:border-0"
+                    [class.bg-vroom-accent/10]="activeTab() === tab.key"
+              [class.text-vroom-text]="activeTab() === tab.key"
+              [class.border-l-2]="activeTab() === tab.key"
+              [class.border-l-vroom-accent]="activeTab() === tab.key"
+              [class.text-vroom-text-dim]="activeTab() !== tab.key"
+              [class.hover:text-vroom-text]="activeTab() !== tab.key"
+              [class.hover:bg-vroom-surface]="activeTab() !== tab.key">
+            <span>{{ tab.emoji }}</span>
+            <span>{{ tab.label }}</span>
+            @if (activeTab() === tab.key) {
+              <svg class="w-3.5 h-3.5 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+              </svg>
+            }
+            </button>
+          }
+        </nav>
+      </div>
+
+
+      <!-- ══════════════════════════════════════
+        MAIN PANEL
+      ══════════════════════════════════════ -->
+      <div class="flex-1 min-w-0 space-y-6 animate-fade-in animate-fill-both">
+
+        <!-- ─────────────────────────────────────
+          PROFILE TAB
+        ───────────────────────────────────── -->
+        @if (activeTab() === 'profile') {
+
+          <div class="card rounded-2xl overflow-hidden">
+            <div class="px-6 py-5 border-b border-vroom-border">
+              <h2 class="font-display font-semibold text-base text-vroom-text">Personal Information</h2>
+              <p class="text-xs text-vroom-muted font-body mt-0.5">Your account details from registration</p>
+            </div>
+
+            @if (isLoadingUser()) {
+              <div class="p-6 space-y-4 animate-pulse">
+                @for (i of [1,2,3,4]; track i) {
+                  <div class="space-y-1.5">
+                    <div class="h-3 bg-vroom-surface rounded-full w-24"></div>
+                    <div class="h-10 bg-vroom-surface rounded-xl"></div>
+                  </div>
+                }
+              </div>
+            } @else {
+              <div class="p-6 space-y-5">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <!-- First name -->
+                  <div>
+                    <label class="block text-xs font-body font-medium text-vroom-muted mb-1.5">First name</label>
+                    <div class="w-full px-4 py-2.5 rounded-xl bg-vroom-surface border border-vroom-border text-sm font-body text-vroom-text">
+                      {{ user()?.firstName || '—' }}
+                    </div>
+                  </div>
+                  <!-- Last name -->
+                  <div>
+                    <label class="block text-xs font-body font-medium text-vroom-muted mb-1.5">Last name</label>
+                    <div class="w-full px-4 py-2.5 rounded-xl bg-vroom-surface border border-vroom-border text-sm font-body text-vroom-text">
+                      {{ user()?.lastName || '—' }}
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Email -->
+                <div>
+                  <label class="block text-xs font-body font-medium text-vroom-muted mb-1.5">Email address</label>
+                  <div class="w-full px-4 py-2.5 rounded-xl bg-vroom-surface border border-vroom-border text-sm font-body text-vroom-text flex items-center justify-between gap-3">
+                    <span>{{ user()?.email || '—' }}</span>
+                    @if (user()?.emailVerified) {
+                      <span class="flex items-center gap-1 text-xs text-vroom-green flex-shrink-0">
+                        <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                        </svg>
+                        Verified
+                      </span>
+                    } @else {
+                      <span class="text-xs text-vroom-amber flex-shrink-0">Unverified</span>
+                    }
+                  </div>
+                </div>
+
+                <!-- Role -->
+                <div>
+                  <label class="block text-xs font-body font-medium text-vroom-muted mb-1.5">Role</label>
+                  <div class="w-full px-4 py-2.5 rounded-xl bg-vroom-surface border border-vroom-border text-sm font-body text-vroom-text flex items-center gap-2">
+                    <span class="text-xs font-body font-medium px-2 py-0.5 rounded-lg border" [class]="roleBadge().cls">
+                      {{ roleBadge().label }}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Member since -->
+                <div>
+                  <label class="block text-xs font-body font-medium text-vroom-muted mb-1.5">Member since</label>
+                  <div class="w-full px-4 py-2.5 rounded-xl bg-vroom-surface border border-vroom-border text-sm font-body text-vroom-text">
+                    {{ memberSince() || '—' }}
+                  </div>
+                </div>
+
+                <!-- Read-only notice -->
+                <div class="flex items-start gap-2.5 px-4 py-3 rounded-xl bg-vroom-surface/50 border border-vroom-border">
+                  <svg class="w-4 h-4 text-vroom-muted flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  <p class="text-xs font-body text-vroom-muted leading-relaxed">
+                    Profile editing is not available in this version. Contact support if you need to update your name or email.
+                  </p>
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- Account activity -->
+          @if (user() && !isLoadingUser()) {
+            <div class="card rounded-2xl p-6">
+              <h2 class="font-display font-semibold text-base text-vroom-text mb-4">Account Activity</h2>
+              <div class="space-y-3">
+                <div class="flex items-center justify-between py-2 border-b border-vroom-border">
+                  <span class="text-sm font-body text-vroom-text-dim">Account created</span>
+                  <span class="text-sm font-body text-vroom-text">{{ formatDate(user()?.createdAt) }}</span>
+                </div>
+                <div class="flex items-center justify-between py-2 border-b border-vroom-border">
+                  <span class="text-sm font-body text-vroom-text-dim">Last updated</span>
+                  <span class="text-sm font-body text-vroom-text">{{ formatDate(user()?.updatedAt) }}</span>
+                </div>
+                <div class="flex items-center justify-between py-2">
+                  <span class="text-sm font-body text-vroom-text-dim">Email verification</span>
+                  <span class="text-sm font-body"
+                        [class.text-vroom-green]="user()?.emailVerified"
+                        [class.text-vroom-amber]="!user()?.emailVerified">
+                    {{ user()?.emailVerified ? 'Verified ✓' : 'Not verified' }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          }
+        }
+
+
+        <!-- ─────────────────────────────────────
+          SECURITY TAB
+        ───────────────────────────────────── -->
+        @if (activeTab() === 'security') {
+
+          <!-- Password change card -->
+          <div class="card rounded-2xl overflow-hidden">
+            <div class="px-6 py-5 border-b border-vroom-border">
+              <h2 class="font-display font-semibold text-base text-vroom-text">Change Password</h2>
+              <p class="text-xs text-vroom-muted font-body mt-0.5">
+                We'll send a reset link to <span class="text-vroom-text">{{ currentEmail() }}</span>
+              </p>
+            </div>
+
+            <div class="p-6">
+
+              <!-- Idle state -->
+              @if (passwordStatus() === 'idle' || passwordStatus() === 'error') {
+                <div class="space-y-5">
+                  <div class="flex items-start gap-3 p-4 rounded-xl bg-vroom-surface border border-vroom-border">
+                    <div class="w-9 h-9 rounded-xl bg-vroom-amber/10 border border-amber-500/20 flex items-center justify-center flex-shrink-0">
+                      <svg class="w-4.5 h-4.5 text-vroom-amber" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                      </svg>
+                    </div>
+                    <div>
+                      <p class="text-sm font-body font-medium text-vroom-text mb-0.5">Secure reset via email</p>
+                      <p class="text-xs font-body text-vroom-text-dim leading-relaxed">
+                        For your security, password changes require email verification. We'll send a one-time link to your registered address.
+                      </p>
+                    </div>
+                  </div>
+
+                  @if (passwordStatus() === 'error' && passwordError()) {
+                    <div class="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/25 text-red-400 text-sm font-body">
+                      <svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                      </svg>
+                      {{ passwordError() }}
+                    </div>
+                  }
+
+                  <button (click)="sendPasswordReset()"
+                          class="btn-primary w-full flex items-center justify-center gap-2 py-3">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                    </svg>
+                    Send Reset Link
+                  </button>
+                </div>
+              }
+
+              <!-- Sending state -->
+              @if (passwordStatus() === 'sending') {
+                <div class="flex flex-col items-center gap-4 py-8 text-center">
+                  <svg class="w-8 h-8 text-vroom-accent animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                  </svg>
+                  <p class="text-sm font-body text-vroom-text-dim">Sending reset link…</p>
+                </div>
+              }
+
+              <!-- Sent state -->
+              @if (passwordStatus() === 'sent') {
+                <div class="space-y-5">
+                  <div class="flex flex-col items-center gap-3 py-6 text-center">
+                    <div class="w-14 h-14 rounded-2xl bg-vroom-green/10 border border-vroom-green/25 flex items-center justify-center">
+                      <svg class="w-7 h-7 text-vroom-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 class="font-display font-semibold text-vroom-text mb-1">Check your inbox</h3>
+                      <p class="text-sm font-body text-vroom-text-dim">
+                        A reset link was sent to <span class="text-vroom-text">{{ currentEmail() }}</span>
+                      </p>
+                      <p class="text-xs font-body text-vroom-muted mt-1">The link expires in 15 minutes</p>
+                    </div>
+                  </div>
+                  <button (click)="resetPasswordForm()" class="btn-secondary w-full text-sm">
+                    Didn't receive it? Send again
+                  </button>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Session info card -->
+          <div class="card rounded-2xl p-6">
+            <h2 class="font-display font-semibold text-base text-vroom-text mb-4">Active Session</h2>
+            <div class="flex items-center gap-3 p-4 rounded-xl bg-vroom-surface border border-vroom-border">
+              <div class="w-9 h-9 rounded-xl bg-vroom-green/10 border border-vroom-green/20 flex items-center justify-center flex-shrink-0">
+                <div class="w-2.5 h-2.5 rounded-full bg-vroom-green animate-pulse"></div>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-body font-medium text-vroom-text">Current browser session</p>
+                <p class="text-xs font-body text-vroom-muted mt-0.5">JWT token · Authenticated</p>
+              </div>
+              <span class="text-xs font-mono text-vroom-green flex-shrink-0">Active</span>
+            </div>
+          </div>
+        }
+
+
+        <!-- ─────────────────────────────────────
+          ACCOUNT TAB
+        ───────────────────────────────────── -->
+        @if (activeTab() === 'account') {
+
+          <!-- Quick links -->
+          <div class="card rounded-2xl overflow-hidden">
+            <div class="px-6 py-5 border-b border-vroom-border">
+              <h2 class="font-display font-semibold text-base text-vroom-text">Quick Navigation</h2>
+            </div>
+            <div class="divide-y divide-vroom-border">
+              @for (link of [
+                { route: '/dashboard', emoji: '🏠', label: 'Dashboard',       desc: 'Your learning home' },
+                { route: '/scenarios', emoji: '🎬', label: 'Scenario Library', desc: 'Browse all scenarios' },
+                { route: '/progress',  emoji: '📊', label: 'My Progress',      desc: 'Analytics & history' },
+                { route: '/badges',    emoji: '🏆', label: 'Badge Collection', desc: 'Achievements earned' }
+              ]; track link.route) {
+                <a [routerLink]="link.route"
+                   class="flex items-center gap-4 px-6 py-4 hover:bg-vroom-surface/50 transition-colors group">
+                  <span class="text-xl">{{ link.emoji }}</span>
+                  <div class="flex-1">
+                    <p class="text-sm font-body font-medium text-vroom-text">{{ link.label }}</p>
+                    <p class="text-xs font-body text-vroom-muted">{{ link.desc }}</p>
+                  </div>
+                  <svg class="w-4 h-4 text-vroom-muted group-hover:text-vroom-accent group-hover:translate-x-0.5 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                  </svg>
+                </a>
+              }
+            </div>
+          </div>
+
+          <!-- Danger zone -->
+          <div class="card rounded-2xl overflow-hidden border border-red-500/15">
+            <div class="px-6 py-5 border-b border-red-500/15 bg-red-500/5">
+              <h2 class="font-display font-semibold text-base text-red-400">Danger Zone</h2>
+              <p class="text-xs text-red-400/60 font-body mt-0.5">Actions that affect your session</p>
+            </div>
+
+            <div class="p-6 space-y-4">
+
+              <!-- Sign out -->
+              @if (!showLogoutConfirm()) {
+                <div class="flex items-center justify-between gap-4 p-4 rounded-xl border border-vroom-border">
+                  <div>
+                    <p class="text-sm font-body font-medium text-vroom-text">Sign out</p>
+                    <p class="text-xs font-body text-vroom-muted mt-0.5">End your current session on this device</p>
+                  </div>
+                  <button (click)="confirmLogout()"
+                          class="flex-shrink-0 px-4 py-2 rounded-xl border border-vroom-border text-sm font-body text-vroom-text-dim hover:border-red-500/40 hover:text-red-400 hover:bg-red-500/5 transition-all">
+                    Sign out
+                  </button>
+                </div>
+              } @else {
+                <div class="p-4 rounded-xl border border-red-500/30 bg-red-500/5">
+                  <p class="text-sm font-body font-medium text-red-400 mb-1">Confirm sign out?</p>
+                  <p class="text-xs font-body text-vroom-muted mb-4">You'll need to log in again to access your account.</p>
+                  <div class="flex gap-3">
+                    <button (click)="doLogout()" [disabled]="isLoggingOut()"
+                            class="flex-1 py-2 rounded-xl bg-red-500/15 border border-red-500/30 text-sm font-body text-red-400 hover:bg-red-500/25 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+                      @if (isLoggingOut()) {
+                        <svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                        </svg>
+                      }
+                      Yes, sign out
+                    </button>
+                    <button (click)="cancelLogout()"
+                            class="flex-1 py-2 rounded-xl border border-vroom-border text-sm font-body text-vroom-text-dim hover:bg-vroom-surface transition-colors">
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              }
+
+              <!-- Account deletion notice -->
+              <div class="flex items-start gap-3 p-4 rounded-xl border border-vroom-border">
+                <div>
+                  <p class="text-sm font-body font-medium text-vroom-text">Delete account</p>
+                  <p class="text-xs font-body text-vroom-muted mt-0.5 leading-relaxed">
+                    To permanently delete your account and all associated data, please contact
+                    <a href="mailto:support@vroom.app" class="text-vroom-accent hover:underline">support&#64;vroom.app</a>.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+
+      </div>
+    </div>
+  </div>
+</div>
