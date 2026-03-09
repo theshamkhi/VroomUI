@@ -1,0 +1,643 @@
+<!-- ============================================================
+  VROOM LANDING PAGE
+  Dark editorial aesthetic — aggressive typography, road motifs
+  ============================================================ -->
+
+<div class="bg-vroom-black text-vroom-text overflow-x-hidden">
+
+  <!-- ═══════════════════════════════════════════════
+    NAVBAR
+  ═══════════════════════════════════════════════ -->
+  <header
+    class="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
+    [class.bg-vroom-dark]="isScrolled()"
+    [class.border-b]="isScrolled()"
+    [class.border-vroom-border]="isScrolled()"
+    [class.backdrop-blur-xl]="isScrolled()"
+  >
+    <nav class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+      <!-- Logo -->
+      <a routerLink="/" class="vroom-logo flex items-center gap-1.5 z-10">
+        <div class="w-8 h-8 rounded-lg bg-vroom-accent flex items-center justify-center">
+          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+          </svg>
+        </div>
+        VROOM
+      </a>
+
+      <!-- Desktop nav -->
+      <ul class="hidden md:flex items-center gap-8">
+        @for (link of [['#scenarios', 'Scenarios'], ['#how-it-works', 'How it works'], ['#instructors', 'Instructors']]; track link[0]) {
+          <li>
+            <a [href]="link[0]" class="text-vroom-text-dim hover:text-vroom-text font-body text-sm transition-colors duration-200">
+              {{ link[1] }}
+            </a>
+          </li>
+        }
+      </ul>
+
+      <!-- CTA buttons -->
+      <div class="hidden md:flex items-center gap-3">
+        @if (!authService.isAuthenticated()) {
+          <a routerLink="/auth/login" class="btn-ghost text-sm px-4 py-2">Sign in</a>
+          <a routerLink="/auth/register" class="btn-primary text-sm px-5 py-2.5">Start free</a>
+        } @else {
+          <a [routerLink]="dashboardRoute()" class="btn-ghost text-sm px-4 py-2">Dashboard</a>
+          <button (click)="authService.logout()" class="btn-primary text-sm px-5 py-2.5">Logout</button>
+        }
+      </div>
+
+      <!-- Mobile menu button -->
+      <button (click)="toggleMenu()" class="md:hidden text-vroom-text-dim hover:text-vroom-text transition-colors z-10">
+        @if (!mobileMenuOpen()) {
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+          </svg>
+        } @else {
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        }
+      </button>
+    </nav>
+
+    <!-- Mobile menu -->
+    @if (mobileMenuOpen()) {
+      <div class="md:hidden bg-vroom-dark border-t border-vroom-border px-6 py-6 space-y-4 animate-slide-up animate-fill-both">
+        <a href="#scenarios" (click)="toggleMenu()" class="block text-vroom-text-dim hover:text-vroom-text font-body py-2">Scenarios</a>
+        <a href="#how-it-works" (click)="toggleMenu()" class="block text-vroom-text-dim hover:text-vroom-text font-body py-2">How it works</a>
+        <a href="#instructors" (click)="toggleMenu()" class="block text-vroom-text-dim hover:text-vroom-text font-body py-2">Instructors</a>
+        <div class="flex flex-col gap-3 pt-4 border-t border-vroom-border">
+          @if (!authService.isAuthenticated()) {
+            <a routerLink="/auth/login" class="btn-secondary text-center">Sign in</a>
+            <a routerLink="/auth/register" class="btn-primary text-center">Start free</a>
+          } @else {
+            <a [routerLink]="dashboardRoute()" (click)="toggleMenu()" class="btn-secondary text-center">Dashboard</a>
+            <button (click)="authService.logout(); toggleMenu()" class="btn-primary text-center">Logout</button>
+          }
+        </div>
+      </div>
+    }
+  </header>
+
+
+  <!-- ═══════════════════════════════════════════════
+    HERO
+  ═══════════════════════════════════════════════ -->
+  <section class="relative min-h-screen flex flex-col justify-center pt-24 pb-16 px-6 overflow-hidden">
+
+    <!-- Background: animated road lines -->
+    <div class="absolute inset-0 overflow-hidden pointer-events-none">
+      <!-- Perspective grid -->
+      <div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-[200vw] h-[60vh]" style="
+        background:
+          linear-gradient(rgba(255,77,28,0.04) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255,77,28,0.04) 1px, transparent 1px);
+        background-size: 80px 80px;
+        transform: perspective(600px) rotateX(55deg) translateY(20%);
+        transform-origin: bottom center;
+      "></div>
+      <!-- Gradient fade over grid -->
+      <div class="absolute bottom-0 left-0 right-0 h-3/4 bg-gradient-to-t from-vroom-black via-vroom-black/80 to-transparent"></div>
+      <!-- Accent glows -->
+      <div class="absolute top-1/3 right-1/4 w-[500px] h-[500px] rounded-full bg-vroom-accent blur-[120px] opacity-[0.07]"></div>
+      <div class="absolute top-1/4 left-1/3 w-[400px] h-[400px] rounded-full bg-amber-500 blur-[120px] opacity-[0.04]"></div>
+    </div>
+
+    <div class="relative z-10 max-w-7xl mx-auto w-full">
+      <div class="max-w-4xl">
+
+        <!-- Eyebrow -->
+        <div class="flex items-center gap-3 mb-8 animate-slide-right animate-fill-both">
+          <div class="flex items-center gap-2 bg-vroom-accent/10 border border-vroom-accent/25 rounded-full px-4 py-1.5">
+            <span class="w-2 h-2 rounded-full bg-vroom-accent animate-pulse"></span>
+            <span class="text-vroom-accent text-xs font-body font-medium tracking-wide uppercase">Now open for enrollment</span>
+          </div>
+        </div>
+
+        <!-- Main headline -->
+        <h1 class="font-display font-black leading-[0.9] mb-8 animate-slide-up animate-fill-both animate-delay-100">
+          <span class="block text-[clamp(3.5rem,9vw,8rem)] text-vroom-text">DRIVE</span>
+          <span class="block text-[clamp(3.5rem,9vw,8rem)]">
+            <span class="text-gradient">SMARTER.</span>
+          </span>
+          <span class="block text-[clamp(2rem,5vw,4.5rem)] text-vroom-text-dim font-light tracking-tight mt-2">
+            Before you hit the road.
+          </span>
+        </h1>
+
+        <!-- Subheadline -->
+        <p class="text-vroom-text-dim font-body text-lg md:text-xl max-w-xl leading-relaxed mb-10 animate-slide-up animate-fill-both animate-delay-200">
+          Interactive video scenarios built by certified instructors.
+          Practice real traffic situations, get instant feedback,
+          and arrive at your test actually prepared.
+        </p>
+
+        <!-- CTA row -->
+        <div class="flex flex-wrap items-center gap-4 mb-16 animate-slide-up animate-fill-both animate-delay-300">
+          @if (!authService.isAuthenticated()) {
+            <a routerLink="/auth/register" class="btn-primary text-base px-8 py-4 inline-flex items-center gap-2">
+              Start for free
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+              </svg>
+            </a>
+          } @else {
+            <a [routerLink]="dashboardRoute()" class="btn-primary text-base px-8 py-4 inline-flex items-center gap-2">
+              Go to dashboard
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+              </svg>
+            </a>
+          }
+          <a href="#how-it-works" class="group inline-flex items-center gap-2 text-vroom-text-dim hover:text-vroom-text font-body transition-colors">
+            <div class="w-10 h-10 rounded-full border border-vroom-border group-hover:border-vroom-accent/50 flex items-center justify-center transition-colors">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z"/>
+              </svg>
+            </div>
+            See how it works
+          </a>
+        </div>
+
+        <!-- Stats row -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6 animate-fade-in animate-fill-both animate-delay-400">
+          @for (stat of stats; track stat.label) {
+            <div class="border-l-2 border-vroom-accent/30 pl-4">
+              <div class="text-2xl md:text-3xl font-display font-bold text-vroom-text">{{ stat.value }}</div>
+              <div class="text-sm font-body font-medium text-vroom-text mt-0.5">{{ stat.label }}</div>
+              <div class="text-xs font-body text-vroom-muted">{{ stat.sublabel }}</div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Scroll indicator -->
+    <div class="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce opacity-40">
+      <svg class="w-5 h-5 text-vroom-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+      </svg>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════════════
+    SCENARIO SHOWCASE
+  ═══════════════════════════════════════════════ -->
+  <section id="scenarios" class="py-24 px-6 relative overflow-hidden">
+    <!-- Diagonal separator top -->
+    <div class="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-vroom-border to-transparent"></div>
+
+    <div class="max-w-7xl mx-auto">
+
+      <!-- Section header -->
+      <div class="mb-16">
+        <span class="badge-pill mb-4 inline-flex">50+ scenarios available</span>
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <h2 class="text-4xl md:text-5xl font-display font-bold leading-tight">
+            Real roads.<br/>
+            <span class="text-gradient">Real decisions.</span>
+          </h2>
+          <p class="text-vroom-text-dim font-body max-w-sm">
+            Every scenario is filmed on real roads and designed around the situations most learners fail on.
+          </p>
+        </div>
+      </div>
+
+      <!-- Scenario cards + preview panel -->
+      <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 items-start">
+
+        <!-- Card list -->
+        <div class="lg:col-span-2 space-y-3">
+          @for (s of scenarios; track s.title; let i = $index) {
+            <button
+              (click)="setScenario(i)"
+              class="w-full text-left rounded-xl border p-4 transition-all duration-300 group"
+              [class.border-vroom-accent]="activeScenario() === i"
+              [class.bg-vroom-accent-glow]="activeScenario() === i"
+              [class.border-vroom-border]="activeScenario() !== i"
+              [class.bg-vroom-card]="activeScenario() !== i"
+              [class.hover:border-vroom-accent-dim]="activeScenario() !== i"
+            >
+              <div class="flex items-start gap-3">
+                <div class="text-2xl mt-0.5 flex-shrink-0">{{ s.emoji }}</div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2 mb-1">
+                    <span class="text-xs font-body font-medium text-vroom-muted">{{ s.tag }}</span>
+                    <span class="text-xs font-mono" [class]="difficultyColor(s.difficulty)">{{ s.difficulty }}</span>
+                  </div>
+                  <div class="font-display font-semibold text-sm text-vroom-text truncate">{{ s.title }}</div>
+                  <div class="flex items-center gap-3 mt-2 text-xs text-vroom-muted font-body">
+                    <span>⏱ {{ s.duration }}</span>
+                    <span>✦ {{ s.points }} pts</span>
+                  </div>
+                </div>
+                <svg class="w-4 h-4 text-vroom-muted flex-shrink-0 mt-1 transition-transform duration-200 group-hover:translate-x-0.5"
+                     [class.text-vroom-accent]="activeScenario() === i"
+                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+              </div>
+            </button>
+          }
+        </div>
+
+        <!-- Preview panel -->
+        <div class="lg:col-span-3">
+          @let s = scenarios[activeScenario()];
+          <div class="card rounded-2xl overflow-hidden transition-all duration-500">
+            <!-- Mock video area -->
+            <div class="relative aspect-video bg-gradient-to-br" [class]="s.color">
+              <!-- Road stripes overlay -->
+              <div class="absolute inset-0 flex items-center justify-center">
+                <div class="text-8xl select-none">{{ s.emoji }}</div>
+              </div>
+              <!-- Overlaid road lane markers -->
+              <div class="absolute bottom-0 left-1/2 -translate-x-1/2 flex flex-col gap-3 mb-4 opacity-20">
+                @for (bar of [1,2,3]; track bar) {
+                  <div class="w-1 h-6 bg-white rounded-full"></div>
+                }
+              </div>
+              <!-- Play button -->
+              <div class="absolute inset-0 flex items-center justify-center">
+                <div class="w-16 h-16 rounded-full bg-vroom-black/60 backdrop-blur border border-white/20 flex items-center justify-center cursor-pointer hover:bg-vroom-accent/80 transition-colors group">
+                  <svg class="w-6 h-6 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z"/>
+                  </svg>
+                </div>
+              </div>
+              <!-- Scenario badge -->
+              <div class="absolute top-4 left-4">
+                <span class="badge-pill text-xs">{{ s.tag }}</span>
+              </div>
+              <!-- Duration badge -->
+              <div class="absolute top-4 right-4 bg-vroom-black/70 backdrop-blur rounded-full px-3 py-1 text-xs font-mono text-vroom-text">
+                {{ s.duration }}
+              </div>
+            </div>
+
+            <!-- Scenario info -->
+            <div class="p-6">
+              <div class="flex items-start justify-between gap-4 mb-3">
+                <h3 class="text-xl font-display font-bold text-vroom-text">{{ s.title }}</h3>
+                <span class="text-sm font-mono font-medium flex-shrink-0" [class]="difficultyColor(s.difficulty)">
+                  {{ s.difficulty }}
+                </span>
+              </div>
+              <p class="text-vroom-text-dim font-body text-sm leading-relaxed mb-5">{{ s.description }}</p>
+
+              <!-- Meta row -->
+              <div class="flex items-center gap-4 text-sm text-vroom-muted font-body mb-5">
+                <span class="flex items-center gap-1.5">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  {{ s.duration }}
+                </span>
+                <span class="flex items-center gap-1.5">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+                  {{ s.points }} points
+                </span>
+              </div>
+
+              <a routerLink="/auth/register" class="btn-primary w-full flex items-center justify-center gap-2 text-sm">
+                Try this scenario free
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                </svg>
+              </a>
+            </div>
+          </div>
+
+          <!-- Scenario dots -->
+          <div class="flex justify-center gap-2 mt-4">
+            @for (s of scenarios; track s.title; let i = $index) {
+              <button
+                (click)="setScenario(i)"
+                class="transition-all duration-300 rounded-full"
+                [class.w-6]="activeScenario() === i"
+                [class.w-2]="activeScenario() !== i"
+                [class.h-2]="true"
+                [class.bg-vroom-accent]="activeScenario() === i"
+                [class.bg-vroom-border]="activeScenario() !== i"
+              ></button>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Browse all CTA -->
+      <div class="text-center mt-12">
+        <a routerLink="/auth/register" class="btn-secondary inline-flex items-center gap-2">
+          Browse all 50+ scenarios
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+          </svg>
+        </a>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════════════
+    HOW IT WORKS
+  ═══════════════════════════════════════════════ -->
+  <section id="how-it-works" class="py-24 px-6 relative">
+    <!-- Angled bg -->
+    <div class="absolute inset-0 bg-vroom-dark" style="clip-path: polygon(0 4%, 100% 0%, 100% 96%, 0% 100%);"></div>
+
+    <div class="relative z-10 max-w-7xl mx-auto">
+      <div class="text-center mb-16">
+        <span class="badge-pill mb-4 inline-flex mx-auto">The process</span>
+        <h2 class="text-4xl md:text-5xl font-display font-bold">
+          From signup to<br/>
+          <span class="text-gradient">road-ready</span>
+        </h2>
+      </div>
+
+      <!-- Steps -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-8 relative">
+        <!-- Connector line (desktop) -->
+        <div class="hidden md:block absolute top-8 left-[12.5%] right-[12.5%] h-px bg-gradient-to-r from-vroom-border via-vroom-accent/30 to-vroom-border"></div>
+
+        @for (step of howItWorks; track step.step) {
+          <div class="relative flex flex-col items-center text-center">
+            <!-- Step circle -->
+            <div class="w-16 h-16 rounded-2xl bg-vroom-card border border-vroom-border flex items-center justify-center mb-5 relative z-10">
+              <span class="font-mono text-lg font-bold text-vroom-accent">{{ step.step }}</span>
+            </div>
+            <h3 class="font-display font-bold text-lg text-vroom-text mb-2">{{ step.title }}</h3>
+            <p class="text-vroom-text-dim font-body text-sm leading-relaxed">{{ step.desc }}</p>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════════════
+    FEATURES GRID
+  ═══════════════════════════════════════════════ -->
+  <section class="py-24 px-6">
+    <div class="max-w-7xl mx-auto">
+      <div class="mb-16">
+        <span class="badge-pill mb-4 inline-flex">Everything you need</span>
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <h2 class="text-4xl md:text-5xl font-display font-bold leading-tight">
+            Built for serious<br/>
+            <span class="text-gradient">learners</span>
+          </h2>
+          <p class="text-vroom-text-dim font-body max-w-sm">
+            Not a quiz app. Not a slideshow. A proper training platform used by driving schools.
+          </p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        @for (f of features; track f.title; let i = $index) {
+          <div class="card-hover p-6 rounded-2xl group" [class.lg:col-span-2]="i === 0">
+            <!-- Icon -->
+            <div class="w-12 h-12 rounded-xl bg-vroom-surface border border-vroom-border flex items-center justify-center mb-5 group-hover:border-vroom-accent/30 transition-colors">
+              @switch (f.icon) {
+                @case ('video') {
+                  <svg class="w-5 h-5 text-vroom-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                }
+                @case ('pause') {
+                  <svg class="w-5 h-5 text-vroom-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                }
+                @case ('chart') {
+                  <svg class="w-5 h-5 text-vroom-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                }
+                @case ('shield') {
+                  <svg class="w-5 h-5 text-vroom-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                }
+                @case ('badge') {
+                  <svg class="w-5 h-5 text-vroom-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
+                }
+                @case ('instructor') {
+                  <svg class="w-5 h-5 text-vroom-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222"/></svg>
+                }
+              }
+            </div>
+            <h3 class="font-display font-bold text-vroom-text mb-2">{{ f.title }}</h3>
+            <p class="text-vroom-text-dim font-body text-sm leading-relaxed">{{ f.description }}</p>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════════════
+    INSTRUCTOR SECTION
+  ═══════════════════════════════════════════════ -->
+  <section id="instructors" class="py-24 px-6 relative overflow-hidden">
+    <div class="absolute inset-0 bg-vroom-dark" style="clip-path: polygon(0 4%, 100% 0%, 100% 96%, 0% 100%);"></div>
+    <div class="absolute top-1/2 right-0 w-[600px] h-[600px] rounded-full bg-vroom-accent blur-[150px] opacity-[0.04] -translate-y-1/2"></div>
+
+    <div class="relative z-10 max-w-7xl mx-auto">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+        <!-- Text -->
+        <div>
+          <span class="badge-pill mb-6 inline-flex">For instructors</span>
+          <h2 class="text-4xl md:text-5xl font-display font-bold mb-6 leading-tight">
+            Your expertise,<br/>
+            <span class="text-gradient">amplified</span>
+          </h2>
+          <p class="text-vroom-text-dim font-body text-lg leading-relaxed mb-8">
+            Build custom interactive scenarios in minutes. Upload driving footage, add decision-point questions, set learning objectives — then assign to your entire class.
+          </p>
+          <div class="space-y-4 mb-8">
+            @for (point of instructorPoints; track point) {
+              <div class="flex items-start gap-3">
+                <div class="w-5 h-5 rounded-full bg-vroom-accent/15 border border-vroom-accent/30 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <svg class="w-3 h-3 text-vroom-accent" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                  </svg>
+                </div>
+                <span class="text-vroom-text font-body text-sm">{{ point }}</span>
+              </div>
+            }
+          </div>
+          <a routerLink="/auth/register" class="btn-primary inline-flex items-center gap-2">
+            Create instructor account
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+          </a>
+        </div>
+
+        <!-- Instructor dashboard mockup -->
+        <div class="card rounded-2xl p-5 space-y-3">
+          <div class="flex items-center justify-between mb-4">
+            <span class="font-display font-semibold text-sm text-vroom-text">Instructor Dashboard</span>
+            <span class="badge-pill text-xs">Live</span>
+          </div>
+          <!-- Mini stat cards -->
+          <div class="grid grid-cols-3 gap-3">
+            @for (s of miniStats; track s.label) {
+              <div class="bg-vroom-surface rounded-xl p-3 text-center">
+                <div class="text-xl font-display font-bold text-vroom-text">{{ s.value }}</div>
+                <div class="text-xs text-vroom-muted font-body mt-0.5">{{ s.label }}</div>
+              </div>
+            }
+          </div>
+          <!-- Student list mockup -->
+          <div class="space-y-2 pt-2">
+            @for (student of mockStudents; track student.name) {
+              <div class="flex items-center gap-3 bg-vroom-surface rounded-lg px-3 py-2">
+                <div class="w-8 h-8 rounded-full bg-vroom-accent/20 border border-vroom-accent/30 flex items-center justify-center text-xs font-display font-bold text-vroom-accent flex-shrink-0">
+                  {{ student.initials }}
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-xs font-body font-medium text-vroom-text truncate">{{ student.name }}</div>
+                  <div class="text-xs text-vroom-muted font-body">{{ student.progress }}</div>
+                </div>
+                <div class="text-xs font-mono font-semibold" [class.text-vroom-green]="student.score >= 80" [class.text-vroom-amber]="student.score >= 60 && student.score < 80" [class.text-red-400]="student.score < 60">
+                  {{ student.score }}%
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════════════
+    TESTIMONIALS
+  ═══════════════════════════════════════════════ -->
+  <section class="py-24 px-6">
+    <div class="max-w-7xl mx-auto">
+      <div class="text-center mb-16">
+        <span class="badge-pill mb-4 inline-flex mx-auto">Real results</span>
+        <h2 class="text-4xl md:text-5xl font-display font-bold">
+          Thousands passed.<br/>
+          <span class="text-gradient">Thousands safe.</span>
+        </h2>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        @for (t of testimonials; track t.name; let i = $index) {
+          <div class="card-hover p-6 rounded-2xl flex flex-col" [class.md:col-span-1]="true">
+            <!-- Quote mark -->
+            <div class="text-5xl font-display text-vroom-accent/20 leading-none mb-4">"</div>
+            <p class="text-vroom-text font-body text-sm leading-relaxed flex-1 mb-6">{{ t.text }}</p>
+            <div class="flex items-center gap-3 border-t border-vroom-border pt-4">
+              <div class="w-10 h-10 rounded-full bg-vroom-accent/15 border border-vroom-accent/20 flex items-center justify-center text-sm font-display font-bold text-vroom-accent flex-shrink-0">
+                {{ t.avatar }}
+              </div>
+              <div>
+                <div class="font-body font-medium text-sm text-vroom-text">{{ t.name }}</div>
+                <div class="text-xs text-vroom-muted font-body">{{ t.role }}</div>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════════════
+    FINAL CTA
+  ═══════════════════════════════════════════════ -->
+  <section class="py-24 px-6 relative overflow-hidden">
+    <div class="absolute inset-0 bg-vroom-dark" style="clip-path: polygon(0 8%, 100% 0%, 100% 100%, 0% 100%);"></div>
+    <div class="absolute inset-0 overflow-hidden pointer-events-none">
+      <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] rounded-full bg-vroom-accent blur-[180px] opacity-[0.06]"></div>
+    </div>
+
+    <div class="relative z-10 max-w-3xl mx-auto text-center">
+      <div class="inline-flex items-center gap-2 bg-vroom-accent/10 border border-vroom-accent/25 rounded-full px-4 py-1.5 mb-8">
+        <span class="w-2 h-2 rounded-full bg-vroom-accent animate-pulse"></span>
+        <span class="text-vroom-accent text-xs font-body font-medium tracking-wide uppercase">Free to start — no credit card</span>
+      </div>
+
+      <h2 class="text-5xl md:text-6xl font-display font-black leading-tight mb-6">
+        Ready to become<br/>
+        a <span class="text-gradient">better driver?</span>
+      </h2>
+      <p class="text-vroom-text-dim font-body text-lg max-w-md mx-auto mb-10">
+        Join thousands of learners who arrived at their driving test actually prepared.
+        Start with a free scenario today.
+      </p>
+
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+        @if (!authService.isAuthenticated()) {
+          <a routerLink="/auth/register" class="btn-primary text-base px-10 py-4 inline-flex items-center gap-2 w-full sm:w-auto justify-center">
+            Get started — it's free
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+            </svg>
+          </a>
+          <a routerLink="/auth/login" class="btn-ghost text-base px-8 py-4 w-full sm:w-auto justify-center text-center">
+            Already have an account
+          </a>
+        } @else {
+          <a [routerLink]="dashboardRoute()" class="btn-primary text-base px-10 py-4 inline-flex items-center gap-2 w-full sm:w-auto justify-center">
+            Go to dashboard
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+            </svg>
+          </a>
+          <button (click)="authService.logout()" class="btn-ghost text-base px-8 py-4 w-full sm:w-auto justify-center text-center">
+            Logout
+          </button>
+        }
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════════════
+    FOOTER
+  ═══════════════════════════════════════════════ -->
+  <footer class="border-t border-vroom-border px-6 py-12">
+    <div class="max-w-7xl mx-auto">
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-8 mb-12">
+        <!-- Brand -->
+        <div class="col-span-2">
+          <a routerLink="/" class="vroom-logo flex items-center gap-2 mb-4">
+            <div class="w-8 h-8 rounded-lg bg-vroom-accent flex items-center justify-center">
+              <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+              </svg>
+            </div>
+            VROOM
+          </a>
+          <p class="text-vroom-muted font-body text-sm max-w-xs leading-relaxed">
+            Interactive driving education for the modern learner. Built with certified instructors.
+          </p>
+        </div>
+
+        <!-- Links -->
+        @for (col of footerLinks; track col.heading) {
+          <div>
+            <h4 class="font-display font-semibold text-sm text-vroom-text mb-4">{{ col.heading }}</h4>
+            <ul class="space-y-2.5">
+              @for (link of col.links; track link.label) {
+                <li>
+                  <a [routerLink]="link.href" class="text-vroom-muted hover:text-vroom-text font-body text-sm transition-colors">
+                    {{ link.label }}
+                  </a>
+                </li>
+              }
+            </ul>
+          </div>
+        }
+      </div>
+
+      <div class="flex flex-col md:flex-row items-center justify-between gap-4 border-t border-vroom-border pt-8">
+        <p class="text-vroom-muted font-body text-sm">
+          © 2025 Vroom Platform. All rights reserved.
+        </p>
+        <div class="flex items-center gap-6">
+          <a href="#" class="text-vroom-muted hover:text-vroom-text font-body text-sm transition-colors">Privacy</a>
+          <a href="#" class="text-vroom-muted hover:text-vroom-text font-body text-sm transition-colors">Terms</a>
+          <a href="#" class="text-vroom-muted hover:text-vroom-text font-body text-sm transition-colors">Contact</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+</div>
