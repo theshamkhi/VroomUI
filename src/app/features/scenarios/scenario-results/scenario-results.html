@@ -1,0 +1,291 @@
+<div class="min-h-full bg-vroom-black">
+
+  <!-- ══ LOADING ══ -->
+  @if (isLoading()) {
+    <div class="max-w-3xl mx-auto px-6 py-12 space-y-6">
+      <div class="h-64 rounded-3xl bg-vroom-surface animate-pulse"></div>
+      <div class="grid grid-cols-3 gap-4">
+        @for (s of skeletons.slice(0,3); track $index) {
+          <div class="h-24 rounded-2xl bg-vroom-surface animate-pulse"></div>
+        }
+      </div>
+      @for (s of skeletons; track $index) {
+        <div class="h-16 rounded-2xl bg-vroom-surface animate-pulse"></div>
+      }
+    </div>
+  }
+
+  @else if (hasError()) {
+    <!-- ══ ERROR ══ -->
+
+    <div class="flex flex-col items-center justify-center min-h-[60vh] text-center px-6">
+      <div class="text-5xl mb-4">🚧</div>
+      <h2 class="font-display font-bold text-xl text-vroom-text mb-2">Results not found</h2>
+      <p class="text-vroom-text-dim font-body text-sm mb-6">This scenario may not exist or your session expired.</p>
+      <a routerLink="/scenarios" class="btn-primary inline-flex items-center gap-2 text-sm">← Back to Scenarios</a>
+    </div>
+  }
+
+  @else if (scenario()) {
+    @let s = scenario()!;
+    @let prog = progress();
+
+    <!-- ═══════════════════════════════════
+      HERO — score reveal
+    ═══════════════════════════════════ -->
+    <div class="relative overflow-hidden border-b border-vroom-border bg-vroom-dark">
+
+      <!-- Grid texture -->
+      <div class="absolute inset-0 opacity-[0.03]" style="
+        background-image: linear-gradient(rgba(255,255,255,1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,1) 1px, transparent 1px);
+        background-size: 32px 32px;
+      "></div>
+
+      <!-- Color glow -->
+      <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-48 blur-[120px] opacity-10 pointer-events-none"
+           [class.bg-vroom-green]="passed()"
+           [class.bg-vroom-accent]="!passed()">
+      </div>
+
+      <!-- Confetti for pass -->
+      @if (passed()) {
+        <div class="absolute inset-0 overflow-hidden pointer-events-none">
+          @for (dot of [1,2,3,4,5,6,7,8,9,10,11,12]; track dot) {
+            <div class="absolute w-1.5 h-1.5 rounded-full animate-bounce opacity-60"
+                 [style]="'left:' + (dot * 8.3) + '%; top:' + (15 + (dot % 4) * 18) + '%; animation-delay:' + (dot * 0.12) + 's; background:' + (['#10B981','#FF4D1C','#F59E0B','#3B82F6'][dot % 4])">
+            </div>
+          }
+        </div>
+      }
+
+      <div class="relative max-w-3xl mx-auto px-6 py-12 text-center">
+
+        <!-- Back breadcrumb -->
+        <div class="flex justify-center mb-8">
+          <a [routerLink]="['/scenarios', scenarioId()]"
+             class="inline-flex items-center gap-1.5 text-vroom-muted hover:text-vroom-text font-body text-sm transition-colors group">
+            <svg class="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+            </svg>
+            {{ s.title }}
+          </a>
+        </div>
+
+        <!-- Score ring -->
+        <div class="flex justify-center mb-6 animate-fade-in animate-fill-both">
+          <div class="relative w-36 h-36">
+            <div class="w-36 h-36 rounded-full" [style]="ringGradient() + '; padding: 10px;'">
+              <div class="w-full h-full rounded-full bg-vroom-dark flex flex-col items-center justify-center">
+                <span class="text-4xl num-value leading-none" [class]="scoreColor(score())">
+                  {{ score() }}%
+                </span>
+                <span class="text-xs font-body text-vroom-muted mt-1">score</span>
+              </div>
+            </div>
+            <!-- Ring glow -->
+            <div class="absolute inset-0 rounded-full blur-2xl opacity-20 pointer-events-none -z-10"
+                 [class.bg-vroom-green]="passed()"
+                 [class.bg-vroom-accent]="!passed()">
+            </div>
+          </div>
+        </div>
+
+        <!-- Verdict -->
+        <div class="animate-slide-up animate-fill-both" style="animation-delay:0.15s">
+          <div class="text-4xl mb-2">{{ passed() ? '🎉' : '💪' }}</div>
+          <h1 class="text-2xl font-display font-bold mb-1"
+              [class.text-vroom-green]="passed()"
+              [class.text-vroom-accent]="!passed()">
+            {{ passed() ? 'Scenario Passed!' : 'Not Quite There' }}
+          </h1>
+          <p class="text-vroom-text-dim font-body text-sm max-w-sm mx-auto">
+            {{ passed()
+            ? 'Great work! You cleared the ' + passingPct() + '% passing threshold.'
+            : 'You needed ' + passingPct() + '% to pass. Review the breakdown below and try again.'
+            }}
+          </p>
+        </div>
+
+        <!-- Stat strip -->
+        <div class="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-3 animate-slide-up animate-fill-both" style="animation-delay:0.25s">
+          <div class="card rounded-2xl p-4 text-center">
+            <div class="text-2xl num-value text-vroom-text mb-0.5">{{ correctCount() }}/{{ totalQuestions() }}</div>
+            <div class="text-xs font-body text-vroom-muted">Correct</div>
+          </div>
+          <div class="card rounded-2xl p-4 text-center">
+            <div class="text-2xl num-value text-vroom-accent mb-0.5">{{ pointsEarned() }}</div>
+            <div class="text-xs font-body text-vroom-muted">Points</div>
+          </div>
+          <div class="card rounded-2xl p-4 text-center">
+            <div class="text-2xl num-value mb-0.5" [class]="scoreColor(accuracy())">{{ accuracy() }}%</div>
+            <div class="text-xs font-body text-vroom-muted">Accuracy</div>
+          </div>
+          @if (avgTimeTaken() !== null) {
+            <div class="card rounded-2xl p-4 text-center">
+              <div class="text-2xl num-value text-vroom-text mb-0.5">{{ avgTimeTaken() }}s</div>
+              <div class="text-xs font-body text-vroom-muted">Avg / Q</div>
+            </div>
+          } @else if (prog) {
+            <div class="card rounded-2xl p-4 text-center">
+              <div class="text-2xl num-value text-vroom-text mb-0.5">{{ prog.attemptCount }}</div>
+              <div class="text-xs font-body text-vroom-muted">Attempts</div>
+            </div>
+          }
+        </div>
+
+        <!-- Personal best badge -->
+        @if (prog && prog.attemptCount > 1 && prog.highestScore !== score()) {
+          <div class="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-vroom-surface border border-vroom-border text-xs font-body text-vroom-text-dim">
+            <span class="text-vroom-amber">★</span>
+            Personal best: <span class="font-semibold ml-1" [class]="scoreColor(prog.highestScore)">{{ prog.highestScore }}%</span>
+            &nbsp;across {{ prog.attemptCount }} attempts
+          </div>
+        }
+      </div>
+    </div>
+
+
+    <!-- ═══════════════════════════════════
+      QUESTION BREAKDOWN
+    ═══════════════════════════════════ -->
+    <div class="max-w-3xl mx-auto px-6 py-8 space-y-3">
+
+      <!-- Section header -->
+      <div class="flex items-center justify-between mb-1">
+        <h2 class="font-display font-semibold text-base text-vroom-text">
+          Question Breakdown
+          @if (questions().length > 0) {
+            <span class="text-vroom-muted font-normal text-sm ml-1">({{ questions().length }})</span>
+          }
+        </h2>
+        @if (routerResults().length > 0 && questionRows().length > 0) {
+          <div class="flex items-center gap-3 text-xs font-body">
+            <button (click)="expandAll()" class="text-vroom-muted hover:text-vroom-text transition-colors">Expand all</button>
+            <span class="text-vroom-border">·</span>
+            <button (click)="collapseAll()" class="text-vroom-muted hover:text-vroom-text transition-colors">Collapse</button>
+          </div>
+        }
+      </div>
+
+      <!-- No questions state -->
+      @if (questionRows().length === 0) {
+        <div class="card rounded-2xl p-8 text-center">
+          <p class="text-vroom-muted font-body text-sm">Question details are not available for this attempt.</p>
+        </div>
+      }
+
+      <!-- Question accordion rows -->
+      @for (row of questionRows(); track row.question.id; let i = $index) {
+        <div class="card rounded-2xl overflow-hidden border transition-colors"
+             [class.border-vroom-green\30]="row.result?.correct === true"
+          [class.border-red-500\25]="row.result?.correct === false"
+          [class.border-vroom-border]="row.result === null">
+
+          <!-- Header row — always visible, click to expand -->
+        <button class="w-full flex items-center gap-4 px-5 py-4 text-left hover:bg-vroom-surface/30 transition-colors"
+                (click)="toggleExpand(row.question.id)">
+
+          <!-- Index / result indicator -->
+          <div class="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 text-xs font-mono font-bold"
+               [class.bg-vroom-green\15]="row.result?.correct === true"
+          [class.text-vroom-green]="row.result?.correct === true"
+          [class.bg-red-500\10]="row.result?.correct === false"
+          [class.text-red-400]="row.result?.correct === false"
+          [class.bg-vroom-surface]="row.result === null"
+          [class.text-vroom-muted]="row.result === null">
+          @if (row.result?.correct === true)  { ✓ }
+          @else if (row.result?.correct === false) { ✗ }
+          @else { {{ i + 1 }} }
+          </div>
+
+          <!-- Question text + meta -->
+          <div class="flex-1 min-w-0">
+            <p class="font-body text-sm font-medium text-vroom-text leading-snug line-clamp-2">
+              {{ row.question.questionText }}
+            </p>
+            <div class="flex items-center gap-3 mt-1 text-xs font-body text-vroom-muted">
+              <span>{{ row.question.type.replace('_', ' ') }}</span>
+              @if (row.result) {
+                <span class="font-mono" [class.text-vroom-green]="row.result.correct" [class.text-red-400]="!row.result.correct">
+                    {{ row.result.correct ? '+' : '' }}{{ row.result.pointsEarned }} / {{ row.question.points }} pts
+                  </span>
+                @if (row.result.timeTaken) {
+                  <span>{{ row.result.timeTaken }}s</span>
+                }
+              } @else {
+                <span>{{ row.question.points }} pts</span>
+              }
+            </div>
+          </div>
+
+          <!-- Chevron -->
+          <svg class="w-4 h-4 text-vroom-muted flex-shrink-0 transition-transform duration-200"
+               [class.rotate-180]="row.expanded"
+               fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+          </svg>
+        </button>
+
+        <!-- Expanded detail -->
+        @if (row.expanded) {
+          <div class="border-t border-vroom-border px-5 py-4 space-y-3 animate-fade-in animate-fill-both">
+
+            <!-- Answers -->
+            <div class="grid gap-2"
+                 [class.grid-cols-1]="row.question.answers.length <= 3"
+                 [class.grid-cols-2]="row.question.answers.length > 3">
+              @for (answer of row.question.answers; track answer.id) {
+                @let marker = answerMarker(answer.id, row);
+                <div class="flex items-start gap-3 px-3 py-2.5 rounded-xl border text-sm font-body"
+                     [class]="answerStateClass(answer.id, row)">
+                  <div class="w-5 h-5 rounded flex items-center justify-center flex-shrink-0 border text-xs font-bold mt-0.5 transition-colors"
+                       [class]="marker.cls">
+                    {{ marker.icon }}
+                  </div>
+                  <span class="leading-snug">{{ answer.answerText }}</span>
+                </div>
+                <!-- Per-answer explanation (shown if correct or was selected wrong) -->
+                @if (answer.explanation && (answer.isCorrect || row.result?.selectedIds?.includes(answer.id))) {
+                  <p class="text-xs font-body text-vroom-muted pl-8 -mt-1 leading-relaxed col-span-full">
+                    {{ answer.explanation }}
+                  </p>
+                }
+              }
+            </div>
+
+            <!-- Question explanation -->
+            @if (row.question.explanation) {
+              <div class="flex items-start gap-2.5 px-3 py-2.5 rounded-xl bg-vroom-surface border border-vroom-border">
+                <span class="flex-shrink-0 mt-0.5">💡</span>
+                <p class="text-xs font-body text-vroom-text-dim leading-relaxed">{{ row.question.explanation }}</p>
+              </div>
+            }
+          </div>
+        }
+        </div>
+      }
+
+      <!-- ─── CTA footer ─── -->
+      <div class="pt-4 flex flex-col sm:flex-row gap-3">
+        <button (click)="retry()"
+                class="flex-1 btn-primary py-3.5 flex items-center justify-center gap-2 font-semibold">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46A7.93 7.93 0 0020 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74A7.93 7.93 0 004 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/>
+          </svg>
+          Try Again
+        </button>
+        <a [routerLink]="['/scenarios', scenarioId()]"
+           class="flex-1 btn-secondary py-3.5 flex items-center justify-center gap-2">
+          Scenario Details
+        </a>
+        <a routerLink="/scenarios"
+           class="flex-1 btn-secondary py-3.5 flex items-center justify-center gap-2">
+          Browse Library
+        </a>
+      </div>
+
+    </div>
+  }
+
+</div>
