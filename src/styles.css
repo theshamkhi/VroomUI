@@ -1,1 +1,201 @@
-/* You can add global styles to this file, and also import other style files */
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply box-border;
+  }
+
+  html {
+    @apply bg-vroom-black text-vroom-text;
+    font-family: 'DM Sans', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-vroom-black min-h-screen;
+  }
+
+  h1, h2, h3, h4, h5 {
+    font-family: 'Syne', sans-serif;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #0A0A0F;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #1E1E2E;
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #FF4D1C;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-vroom-accent text-white font-display font-semibold px-6 py-3 rounded-lg
+    hover:bg-vroom-accent-dim transition-all duration-200
+    focus:outline-none focus:ring-2 focus:ring-vroom-accent focus:ring-offset-2 focus:ring-offset-vroom-black
+    disabled:opacity-50 disabled:cursor-not-allowed
+    active:scale-95 shadow-accent;
+  }
+
+  .btn-secondary {
+    @apply bg-vroom-card border border-vroom-border text-vroom-text font-display font-semibold px-6 py-3 rounded-lg
+    hover:bg-vroom-surface hover:border-vroom-accent/30 transition-all duration-200
+    focus:outline-none focus:ring-2 focus:ring-vroom-accent/50 focus:ring-offset-2 focus:ring-offset-vroom-black
+    disabled:opacity-50 disabled:cursor-not-allowed
+    active:scale-95;
+  }
+
+  .btn-ghost {
+    @apply text-vroom-text-dim font-body px-4 py-2 rounded-lg
+    hover:text-vroom-text hover:bg-vroom-surface transition-all duration-200
+    focus:outline-none focus:ring-2 focus:ring-vroom-accent/30;
+  }
+
+  .input-field {
+    @apply w-full bg-vroom-surface border border-vroom-border rounded-lg px-4 py-3
+    text-vroom-text placeholder-vroom-muted font-body
+    focus:outline-none focus:border-vroom-accent focus:ring-1 focus:ring-vroom-accent/50
+    transition-all duration-200;
+  }
+
+  .input-field.error {
+    @apply border-red-500 focus:border-red-500 focus:ring-red-500/50;
+  }
+
+  .label {
+    @apply block text-sm font-body font-medium text-vroom-text-dim mb-1.5;
+  }
+
+  .card {
+    @apply bg-vroom-card border border-vroom-border rounded-2xl shadow-card;
+  }
+
+  .card-hover {
+    @apply card hover:border-vroom-accent/30 hover:shadow-card-hover transition-all duration-300;
+  }
+
+  .error-message {
+    @apply text-red-400 text-sm font-body mt-1.5 flex items-center gap-1;
+  }
+
+  .auth-layout {
+    @apply min-h-screen bg-vroom-black flex;
+  }
+
+  .auth-panel {
+    @apply w-full lg:w-1/2 flex flex-col justify-center px-8 py-12 lg:px-16;
+  }
+
+  .auth-visual {
+    @apply hidden lg:flex lg:w-1/2 relative overflow-hidden;
+    background: linear-gradient(135deg, #111118 0%, #16161E 100%);
+  }
+
+  .vroom-logo {
+    @apply font-display font-black text-2xl tracking-tight;
+  }
+
+  .vroom-logo span {
+    @apply text-vroom-accent;
+  }
+
+  .badge-pill {
+    @apply inline-flex items-center gap-1.5 bg-vroom-surface border border-vroom-border
+    rounded-full px-3 py-1 text-xs font-body font-medium text-vroom-text-dim;
+  }
+
+  .num-value {
+    @apply font-body font-bold tabular-nums;
+  }
+
+  .num-sub {
+    @apply font-body tabular-nums;
+  }
+
+  .alert-error {
+    @apply bg-red-500/10 border border-red-500/30 rounded-lg px-4 py-3 text-red-400 text-sm font-body;
+  }
+
+  .alert-success {
+    @apply bg-green-500/10 border border-green-500/30 rounded-lg px-4 py-3 text-vroom-green text-sm font-body;
+  }
+
+  .divider {
+    @apply flex items-center gap-4 my-6;
+  }
+
+  .divider::before,
+  .divider::after {
+    content: '';
+    @apply flex-1 h-px bg-vroom-border;
+  }
+
+  .road-lines {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    opacity: 0.06;
+  }
+
+  .road-lines::before {
+    content: '';
+    position: absolute;
+    top: -10%;
+    left: 50%;
+    transform: translateX(-50%) perspective(500px) rotateX(35deg);
+    width: 4px;
+    height: 120%;
+    background: repeating-linear-gradient(
+      to bottom,
+      #FF4D1C 0px,
+      #FF4D1C 40px,
+      transparent 40px,
+      transparent 80px
+    );
+    animation: roadScroll 2s linear infinite;
+  }
+
+  @keyframes roadScroll {
+    0% { background-position: 0 0; }
+    100% { background-position: 0 80px; }
+  }
+
+  .glow-orb {
+    @apply absolute rounded-full blur-3xl opacity-20 pointer-events-none;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    background: linear-gradient(135deg, #FF4D1C 0%, #FF6B35 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .border-gradient {
+    border-image: linear-gradient(135deg, #FF4D1C, transparent) 1;
+  }
+
+  .animate-delay-100 { animation-delay: 0.1s; }
+  .animate-delay-200 { animation-delay: 0.2s; }
+  .animate-delay-300 { animation-delay: 0.3s; }
+  .animate-delay-400 { animation-delay: 0.4s; }
+
+  .animate-fill-both { animation-fill-mode: both; }
+}
