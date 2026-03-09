@@ -1,0 +1,475 @@
+<div class="min-h-full bg-vroom-black">
+
+  <!-- ════════════════ LOADING ════════════════ -->
+  @if (isLoading()) {
+    <div class="max-w-7xl mx-auto px-6 lg:px-8 py-8">
+      <!-- Back link skeleton -->
+      <div class="h-4 w-24 bg-vroom-surface rounded-full animate-pulse mb-8"></div>
+      <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
+        <!-- Hero skeleton -->
+        <div class="lg:col-span-3 space-y-4">
+          <div class="h-72 rounded-2xl bg-vroom-surface animate-pulse"></div>
+          <div class="h-6 bg-vroom-surface rounded-full w-1/3 animate-pulse"></div>
+          <div class="h-8 bg-vroom-surface rounded-full w-2/3 animate-pulse"></div>
+          <div class="space-y-2">
+            <div class="h-4 bg-vroom-surface rounded-full animate-pulse"></div>
+            <div class="h-4 bg-vroom-surface rounded-full w-4/5 animate-pulse"></div>
+            <div class="h-4 bg-vroom-surface rounded-full w-3/4 animate-pulse"></div>
+          </div>
+        </div>
+        <!-- Card skeleton -->
+        <div class="lg:col-span-2">
+          <div class="card rounded-2xl p-6 space-y-4 animate-pulse">
+            <div class="h-12 bg-vroom-surface rounded-xl"></div>
+            <div class="h-4 bg-vroom-surface rounded-full w-2/3"></div>
+            <div class="space-y-2">
+              @for (i of [1,2,3,4]; track i) {
+                <div class="h-10 bg-vroom-surface rounded-xl"></div>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  @else if (hasError()) {
+    <!-- ════════════════ ERROR ════════════════ -->
+
+    <div class="flex flex-col items-center justify-center min-h-[60vh] text-center px-6">
+      <div class="text-5xl mb-4">🚧</div>
+      <h2 class="font-display font-bold text-xl text-vroom-text mb-2">Scenario not found</h2>
+      <p class="text-vroom-text-dim font-body text-sm mb-6">This scenario may have been removed or doesn't exist.</p>
+      <a routerLink="/scenarios" class="btn-primary inline-flex items-center gap-2 text-sm">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+        </svg>
+        Back to Scenarios
+      </a>
+    </div>
+  }
+
+  @else if (scenario()) {
+    <!-- ════════════════ CONTENT ════════════════ -->
+    @let s = scenario()!;
+    @let prog = progress();
+
+    <!-- ── Back nav ── -->
+    <div class="border-b border-vroom-border bg-vroom-dark px-6 lg:px-8 py-3">
+      <div class="max-w-7xl mx-auto">
+        <a routerLink="/scenarios"
+           class="inline-flex items-center gap-2 text-vroom-muted hover:text-vroom-text font-body text-sm transition-colors group">
+          <svg class="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+          </svg>
+          Scenario Library
+          <span class="text-vroom-border">/</span>
+          <span class="text-vroom-text truncate max-w-xs">{{ s.title }}</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-6 lg:px-8 py-8 animate-fade-in animate-fill-both">
+      <div class="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start">
+
+        <!-- ══════════════════════════════
+          LEFT — HERO + CONTENT  (3/5)
+        ══════════════════════════════ -->
+        <div class="lg:col-span-3 space-y-6">
+
+          <!-- Hero banner -->
+          <div class="relative rounded-2xl overflow-hidden"
+               [style]="'background: linear-gradient(135deg, ' + themeGradient(s.theme) + ')'">
+
+            <!-- Animated background grid -->
+            <div class="absolute inset-0 opacity-[0.04]" style="
+              background-image: linear-gradient(rgba(255,255,255,1) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(255,255,255,1) 1px, transparent 1px);
+              background-size: 32px 32px;
+            "></div>
+
+            <!-- Perspective road grid at bottom -->
+            <div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-[200%] h-[50%] opacity-[0.06]" style="
+              background-image: linear-gradient(rgba(255,77,28,1) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(255,77,28,1) 1px, transparent 1px);
+              background-size: 60px 60px;
+              transform: perspective(400px) rotateX(50deg) translateY(30%);
+              transform-origin: bottom center;
+            "></div>
+
+            <!-- Accent glow -->
+            <div class="absolute top-0 right-0 w-64 h-64 rounded-full bg-vroom-accent blur-[100px] opacity-[0.08]"></div>
+
+            <!-- Content -->
+            <div class="relative z-10 px-8 pt-10 pb-8">
+              <!-- Theme + difficulty row -->
+              <div class="flex items-center gap-3 mb-6">
+                <span class="text-3xl select-none">{{ themeEmoji(s.theme) }}</span>
+                <span class="text-sm font-body text-vroom-text-dim">{{ themeLabel(s.theme) }}</span>
+                <span class="text-vroom-border">·</span>
+                <span class="text-xs font-mono font-semibold px-2.5 py-1 rounded-lg border" [class]="difficultyBg(s.difficulty)">
+                  {{ s.difficulty }}
+                </span>
+              </div>
+
+              <!-- Title -->
+              <h1 class="text-3xl lg:text-4xl font-display font-bold text-vroom-text leading-tight mb-4">
+                {{ s.title }}
+              </h1>
+
+              <!-- Description -->
+              <p class="text-vroom-text-dim font-body text-base leading-relaxed max-w-xl">
+                {{ s.description }}
+              </p>
+
+              <!-- Quick stats row -->
+              <div class="flex flex-wrap items-center gap-5 mt-8 pt-6 border-t border-white/5">
+                <div class="flex items-center gap-2 text-sm font-body text-vroom-text-dim">
+                  <svg class="w-4 h-4 text-vroom-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                  </svg>
+                  <span>{{ formatDuration(s.durationSeconds) }}</span>
+                </div>
+                <div class="flex items-center gap-2 text-sm font-body text-vroom-text-dim">
+                  <svg class="w-4 h-4 text-vroom-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  <span>{{ questions().length }} question{{ questions().length !== 1 ? 's' : '' }}</span>
+                </div>
+                <div class="flex items-center gap-2 text-sm font-body text-vroom-text-dim">
+                  <svg class="w-4 h-4 text-vroom-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
+                  </svg>
+                  <span>{{ s.maxPoints }} pts</span>
+                </div>
+                @if (s.completionCount > 0) {
+                  <div class="flex items-center gap-2 text-sm font-body text-vroom-text-dim">
+                    <svg class="w-4 h-4 text-vroom-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                    <span>{{ s.completionCount | number }} completed</span>
+                  </div>
+                }
+                @if (s.averageRating) {
+                  <div class="flex items-center gap-1.5 text-sm text-vroom-amber">
+                    <span>★</span>
+                    <span class="font-body">{{ s.averageRating.toFixed(1) }}</span>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- ── Learning Objectives ── -->
+          @if (s.learningObjectives?.length) {
+            <div class="card rounded-2xl p-6">
+              <h2 class="font-display font-semibold text-base text-vroom-text mb-4 flex items-center gap-2">
+                <div class="w-6 h-6 rounded-lg bg-vroom-accent/15 border border-vroom-accent/25 flex items-center justify-center">
+                  <svg class="w-3.5 h-3.5 text-vroom-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                </div>
+                What you'll learn
+              </h2>
+              <ul class="space-y-3">
+                @for (obj of s.learningObjectives; track $index) {
+                  <li class="flex items-start gap-3 text-sm font-body text-vroom-text-dim">
+                    <div class="w-5 h-5 rounded-full bg-vroom-green/10 border border-vroom-green/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <svg class="w-3 h-3 text-vroom-green" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </div>
+                    {{ obj }}
+                  </li>
+                }
+              </ul>
+            </div>
+          }
+
+          <!-- ── Questions Preview ── -->
+          @if (questions().length > 0) {
+            <div class="card rounded-2xl p-6">
+              <h2 class="font-display font-semibold text-base text-vroom-text mb-1 flex items-center gap-2">
+                <div class="w-6 h-6 rounded-lg bg-vroom-blue/10 border border-blue-500/20 flex items-center justify-center">
+                  <svg class="w-3.5 h-3.5 text-vroom-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                </div>
+                {{ questions().length }} Question{{ questions().length !== 1 ? 's' : '' }}
+              </h2>
+              <p class="text-xs text-vroom-muted font-body mb-4">Questions appear at key moments during the video</p>
+
+              <div class="space-y-2">
+                @for (q of questions(); track q.id; let i = $index) {
+                  <div class="flex items-start gap-3 p-3 rounded-xl bg-vroom-surface border border-vroom-border group hover:border-vroom-accent/20 transition-colors">
+                    <!-- Index -->
+                    <div class="w-6 h-6 rounded-lg bg-vroom-card border border-vroom-border flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span class="text-xs font-mono text-vroom-muted">{{ i + 1 }}</span>
+                    </div>
+                    <!-- Question text (preview only — no answers shown) -->
+                    <div class="flex-1 min-w-0">
+                      <p class="text-sm font-body text-vroom-text leading-snug">{{ q.questionText }}</p>
+                      <div class="flex items-center gap-3 mt-1.5 text-xs text-vroom-muted font-body">
+                        <span>{{ q.type.replace('_', ' ') }}</span>
+                        <span>{{ q.points }} pt{{ q.points !== 1 ? 's' : '' }}</span>
+                        @if (q.timeLimitSeconds) {
+                          <span class="flex items-center gap-1">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            {{ q.timeLimitSeconds }}s
+                          </span>
+                        }
+                      </div>
+                    </div>
+                    <!-- Lock icon - answers hidden until played -->
+                    <svg class="w-3.5 h-3.5 text-vroom-muted flex-shrink-0 mt-1 opacity-40" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
+                    </svg>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- ── Tags ── -->
+          @if (s.tags?.length) {
+            <div class="flex flex-wrap gap-2">
+              @for (tag of s.tags; track tag) {
+                <span class="px-3 py-1 rounded-full bg-vroom-surface border border-vroom-border text-xs font-body text-vroom-text-dim hover:border-vroom-accent/30 transition-colors cursor-default">
+                  #{{ tag }}
+                </span>
+              }
+            </div>
+          }
+
+        </div>
+
+
+        <!-- ══════════════════════════════
+          RIGHT — LAUNCH CARD  (2/5)
+        ══════════════════════════════ -->
+        <div class="lg:col-span-2">
+          <div class="sticky top-6 space-y-4">
+
+            <!-- Main launch card -->
+            <div class="card rounded-2xl overflow-hidden">
+
+              <!-- Card header with passing score visual -->
+              <div class="px-6 pt-6 pb-5 border-b border-vroom-border">
+
+                <!-- Previous attempt banner -->
+                @if (prog && prog.status !== CompletionStatus.NOT_STARTED) {
+                  <div class="rounded-xl border p-3 mb-5" [class]="scoreBg(prog.highestScore)">
+                    <div class="flex items-center justify-between mb-1">
+                      <span class="text-xs font-body font-medium">Best score</span>
+                      <span class="text-lg font-display font-bold" [class]="scoreColor(prog.highestScore)">
+                        {{ prog.highestScore }}%
+                      </span>
+                    </div>
+                    <div class="w-full h-1.5 bg-black/20 rounded-full overflow-hidden">
+                      <div class="h-full rounded-full transition-all duration-700"
+                           [class.bg-vroom-green]="prog.highestScore >= 80"
+                           [class.bg-vroom-amber]="prog.highestScore >= 60 && prog.highestScore < 80"
+                           [class.bg-red-400]="prog.highestScore < 60"
+                           [style.width.%]="prog.highestScore">
+                      </div>
+                    </div>
+                    <div class="flex items-center justify-between mt-1.5 text-xs font-body opacity-70">
+                      <span>{{ prog.attemptCount }} attempt{{ prog.attemptCount !== 1 ? 's' : '' }}</span>
+                      <span>Last: {{ relativeTime(prog.lastAccessedAt) }}</span>
+                    </div>
+                  </div>
+                }
+
+                <!-- CTA button -->
+                <button
+                  (click)="startScenario()"
+                  [disabled]="isStarting()"
+                  class="w-full btn-primary py-4 flex items-center justify-center gap-3 text-base disabled:opacity-60 disabled:cursor-not-allowed">
+                  @if (isStarting()) {
+                    <svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                    </svg>
+                    Starting…
+                  } @else {
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M8 5v14l11-7z"/>
+                    </svg>
+                    {{ ctaLabel() }}
+                  }
+                </button>
+
+                @if (ctaState() === 'start') {
+                  <p class="text-center text-xs text-vroom-muted font-body mt-3">No time limit · Pause anytime</p>
+                }
+                @if (ctaState() === 'resume') {
+                  <p class="text-center text-xs text-vroom-amber font-body mt-3 flex items-center justify-center gap-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-vroom-amber animate-pulse inline-block"></span>
+                    {{ prog!.completionPercentage }}% completed — pick up where you left off
+                  </p>
+                }
+                @if (ctaState() === 'retry') {
+                  <a [routerLink]="['/scenarios', s.id, 'results']"
+                     class="mt-3 w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-vroom-border bg-vroom-surface hover:border-vroom-accent/30 hover:bg-vroom-surface transition-colors text-sm font-body text-vroom-text-dim hover:text-vroom-text">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                    </svg>
+                    View Last Results
+                  </a>
+                }
+              </div>
+
+              <!-- Scenario stats -->
+              <div class="px-6 py-5 space-y-3">
+
+                <!-- Passing score -->
+                <div class="flex items-center justify-between text-sm">
+                  <span class="font-body text-vroom-text-dim flex items-center gap-2">
+                    <svg class="w-4 h-4 text-vroom-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    Passing score
+                  </span>
+                  <span class="font-mono font-semibold text-vroom-green">{{ passingPct() }}%</span>
+                </div>
+
+                <!-- Points -->
+                <div class="flex items-center justify-between text-sm">
+                  <span class="font-body text-vroom-text-dim flex items-center gap-2">
+                    <svg class="w-4 h-4 text-vroom-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
+                    </svg>
+                    Max points
+                  </span>
+                  <span class="font-mono font-semibold text-vroom-text">{{ s.maxPoints }}</span>
+                </div>
+
+                <!-- Duration -->
+                <div class="flex items-center justify-between text-sm">
+                  <span class="font-body text-vroom-text-dim flex items-center gap-2">
+                    <svg class="w-4 h-4 text-vroom-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                    Duration
+                  </span>
+                  <span class="font-mono font-semibold text-vroom-text">{{ formatDuration(s.durationSeconds) }}</span>
+                </div>
+
+                <!-- Questions -->
+                <div class="flex items-center justify-between text-sm">
+                  <span class="font-body text-vroom-text-dim flex items-center gap-2">
+                    <svg class="w-4 h-4 text-vroom-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    Questions
+                  </span>
+                  <span class="font-mono font-semibold text-vroom-text">{{ questions().length }}</span>
+                </div>
+
+                <!-- Difficulty -->
+                <div class="flex items-center justify-between text-sm">
+                  <span class="font-body text-vroom-text-dim flex items-center gap-2">
+                    <svg class="w-4 h-4 text-vroom-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                    Difficulty
+                  </span>
+                  <span class="font-mono font-semibold text-sm" [class]="difficultyColor(s.difficulty)">
+                    {{ s.difficulty }}
+                  </span>
+                </div>
+
+                <!-- Rating -->
+                @if (s.averageRating) {
+                  <div class="flex items-center justify-between text-sm">
+                    <span class="font-body text-vroom-text-dim flex items-center gap-2">
+                      <svg class="w-4 h-4 text-vroom-amber" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                      </svg>
+                      Rating
+                    </span>
+                    <span class="font-mono font-semibold text-vroom-amber">{{ s.averageRating.toFixed(1) }} / 5</span>
+                  </div>
+                }
+
+                <!-- Completions -->
+                @if (s.completionCount > 0) {
+                  <div class="flex items-center justify-between text-sm">
+                    <span class="font-body text-vroom-text-dim flex items-center gap-2">
+                      <svg class="w-4 h-4 text-vroom-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                      </svg>
+                      Completed by
+                    </span>
+                    <span class="font-mono font-semibold text-vroom-text">{{ s.completionCount | number }}</span>
+                  </div>
+                }
+              </div>
+            </div>
+
+            <!-- In-progress resume strip -->
+            @if (prog?.status === CompletionStatus.IN_PROGRESS) {
+              <div class="card rounded-xl px-4 py-3 border-vroom-amber/30 bg-vroom-amber/5">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-xs font-body font-medium text-vroom-amber flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-vroom-amber animate-pulse inline-block"></span>
+                    In Progress
+                  </span>
+                  <span class="text-xs font-mono text-vroom-amber">{{ prog!.completionPercentage }}%</span>
+                </div>
+                <div class="w-full h-1.5 bg-vroom-surface rounded-full overflow-hidden">
+                  <div class="h-full bg-vroom-amber rounded-full" [style.width.%]="prog!.completionPercentage"></div>
+                </div>
+              </div>
+            }
+
+          </div>
+        </div>
+      </div>
+
+
+      <!-- ══════════════════════════════
+        RELATED SCENARIOS
+      ══════════════════════════════ -->
+      @if (relatedScenarios().length > 0) {
+        <div class="mt-12 pt-8 border-t border-vroom-border">
+          <div class="flex items-center justify-between mb-5">
+            <h2 class="font-display font-semibold text-lg text-vroom-text">More scenarios</h2>
+            <a routerLink="/scenarios" class="text-sm text-vroom-accent hover:text-vroom-accent-dim font-body transition-colors flex items-center gap-1">
+              Browse all
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+              </svg>
+            </a>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            @for (r of relatedScenarios(); track r.id) {
+              <a [routerLink]="['/scenarios', r.id]"
+                 class="group card-hover rounded-xl overflow-hidden flex flex-col cursor-pointer">
+                <div class="h-24 flex items-center justify-center text-4xl relative"
+                     [style]="'background: linear-gradient(135deg, ' + themeGradient(r.theme) + ')'">
+                  <span class="opacity-50 group-hover:opacity-70 group-hover:scale-110 transition-all duration-300 select-none">
+                    {{ themeEmoji(r.theme) }}
+                  </span>
+                  <span class="absolute top-2 left-2 text-xs font-mono font-semibold px-1.5 py-0.5 rounded border" [class]="difficultyBg(r.difficulty)">
+                    {{ r.difficulty[0] }}
+                  </span>
+                </div>
+                <div class="p-3">
+                  <p class="font-body text-xs font-medium text-vroom-text line-clamp-2 leading-snug mb-2">{{ r.title }}</p>
+                  <div class="flex items-center gap-2 text-xs text-vroom-muted font-body">
+                    <span>⏱ {{ formatDuration(r.durationSeconds) }}</span>
+                    <span class="ml-auto">✦ {{ r.maxPoints }}</span>
+                  </div>
+                </div>
+              </a>
+            }
+          </div>
+        </div>
+      }
+
+    </div>
+  }
+
+</div>
