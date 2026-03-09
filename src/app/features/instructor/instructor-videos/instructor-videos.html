@@ -1,0 +1,544 @@
+<div class="min-h-full bg-vroom-black">
+
+  <!-- ══ HEADER ══ -->
+  <div class="border-b border-vroom-border bg-vroom-dark px-6 lg:px-8 py-5">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-display font-bold text-vroom-text">Video Library</h1>
+        @if (!isLoading()) {
+          <p class="text-vroom-text-dim font-body text-sm mt-0.5">
+            <span class="font-body font-bold tabular-nums">{{ counts().all }}</span> videos · <span class="font-body font-bold tabular-nums">{{ totalSize() }}</span> total
+          </p>
+        }
+      </div>
+      <div class="flex items-center gap-3">
+        <!-- View mode toggle -->
+        <div class="flex items-center gap-1 p-1 rounded-xl bg-vroom-surface border border-vroom-border">
+          <button (click)="viewMode.set('grid')"
+                  class="w-8 h-8 rounded-lg flex items-center justify-center transition-all"
+                  [class.bg-vroom-card]="viewMode() === 'grid'"
+                  [class.text-vroom-text]="viewMode() === 'grid'"
+                  [class.text-vroom-muted]="viewMode() !== 'grid'">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M3 3h7v7H3V3zm0 11h7v7H3v-7zm11-11h7v7h-7V3zm0 11h7v7h-7v-7z"/>
+            </svg>
+          </button>
+          <button (click)="viewMode.set('list')"
+                  class="w-8 h-8 rounded-lg flex items-center justify-center transition-all"
+                  [class.bg-vroom-card]="viewMode() === 'list'"
+                  [class.text-vroom-text]="viewMode() === 'list'"
+                  [class.text-vroom-muted]="viewMode() !== 'list'">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Upload button -->
+        <label class="btn-primary inline-flex items-center gap-2 text-sm cursor-pointer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+          </svg>
+          Upload Video
+          <input type="file" accept="video/*" class="hidden" (change)="onFileChange($event)"/>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <div class="max-w-7xl mx-auto px-6 lg:px-8 py-6 space-y-5">
+
+    <!-- ══ ERROR ══ -->
+    @if (hasError()) {
+      <div class="flex flex-col items-center justify-center py-24 text-center">
+        <div class="text-5xl mb-4">⚠️</div>
+        <h2 class="font-display font-bold text-xl text-vroom-text mb-2">Couldn't load videos</h2>
+        <button (click)="load()" class="btn-primary mt-4 text-sm">Retry</button>
+      </div>
+    }
+
+    @else {
+
+      <!-- ══ UPLOAD PANEL ══ -->
+      @if (showUploadPanel() && uploadFile()) {
+        <div class="card rounded-2xl p-5 border-vroom-accent/30 animate-fade-in animate-fill-both">
+          <div class="flex items-start justify-between gap-4 mb-4">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-vroom-accent/10 border border-vroom-accent/20 flex items-center justify-center flex-shrink-0">
+                <svg class="w-5 h-5 text-vroom-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.723v6.554a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                </svg>
+              </div>
+              <div>
+                <p class="font-body text-sm font-medium text-vroom-text">{{ uploadFile()!.name }}</p>
+                <p class="text-xs font-body font-bold tabular-nums text-vroom-muted">{{ formatBytes(uploadFile()!.size) }}</p>
+              </div>
+            </div>
+            @if (!isUploading()) {
+              <button (click)="resetUpload()" class="text-vroom-muted hover:text-vroom-text transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </button>
+            }
+          </div>
+
+          <!-- Title input -->
+          <div class="mb-4">
+            <label class="block text-xs font-body text-vroom-muted mb-1.5">Video title</label>
+            <input type="text" [value]="uploadTitle()" (input)="uploadTitle.set($any($event.target).value)"
+                   placeholder="Give your video a title…"
+                   class="w-full px-3 py-2 rounded-xl bg-vroom-surface border border-vroom-border text-sm font-body text-vroom-text placeholder-vroom-muted focus:outline-none focus:border-vroom-accent/50 transition-colors"/>
+          </div>
+
+          @if (isUploading()) {
+            <!-- Progress bar -->
+            <div class="mb-4">
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="text-xs font-body text-vroom-muted">Uploading…</span>
+                <span class="text-xs font-body font-bold tabular-nums text-vroom-accent">{{ uploadProgress() }}%</span>
+              </div>
+              <div class="h-1.5 bg-vroom-surface rounded-full overflow-hidden">
+                <div class="h-full bg-vroom-accent rounded-full transition-all duration-300"
+                     [style.width.%]="uploadProgress()"></div>
+              </div>
+            </div>
+          } @else {
+            @if (uploadError()) {
+              <p class="text-xs font-body text-red-400 mb-3">{{ uploadError() }}</p>
+            }
+            <button (click)="startUpload()"
+                    class="btn-primary w-full text-sm flex items-center justify-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+              </svg>
+              Start Upload
+            </button>
+          }
+        </div>
+      }
+
+      <!-- ══ DROP ZONE (only when no panel open) ══ -->
+      @if (!showUploadPanel()) {
+        <div
+          class="border-2 border-dashed rounded-2xl px-8 py-10 text-center transition-all duration-200 cursor-pointer"
+          [class.border-vroom-accent]="isDragging()"
+          [class.bg-vroom-accent\5]="isDragging()"
+          [class.border-vroom-border]="!isDragging()"
+          [class.hover:border-vroom-accent\40]="!isDragging()"
+          (dragover)="onDragOver($event)"
+          (dragleave)="onDragLeave()"
+          (drop)="onDrop($event)">
+        <label class="cursor-pointer block">
+          <div class="w-12 h-12 rounded-2xl bg-vroom-surface border border-vroom-border flex items-center justify-center mx-auto mb-3 transition-all"
+               [class.border-vroom-accent\30]="isDragging()"
+          [class.bg-vroom-accent\5]="isDragging()">
+          <svg class="w-6 h-6 text-vroom-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+          </svg>
+          </div>
+          <p class="font-body text-sm font-medium text-vroom-text mb-1">
+            Drop a video here or <span class="text-vroom-accent">browse</span>
+          </p>
+          <p class="font-body text-xs text-vroom-muted">MP4, MOV, AVI, WebM · max 2 GB</p>
+          <input type="file" accept="video/*" class="hidden" (change)="onFileChange($event)"/>
+        </label>
+        </div>
+      }
+
+      <!-- ══ TOOLBAR ══ -->
+      <div class="flex flex-col sm:flex-row gap-3">
+        <!-- Search -->
+        <div class="relative flex-1">
+          <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-vroom-muted pointer-events-none"
+               fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+          <input type="text" placeholder="Search videos…"
+                 [value]="searchQuery()"
+                 (input)="searchQuery.set($any($event.target).value)"
+                 class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-vroom-surface border border-vroom-border text-sm font-body text-vroom-text placeholder-vroom-muted focus:outline-none focus:border-vroom-accent/50 transition-colors"/>
+        </div>
+
+        <!-- Status filter pills -->
+        <div class="flex gap-2 flex-wrap">
+          @for (tab of [
+            { value: 'ALL',        label: 'All',        count: counts().all },
+            { value: 'READY',      label: 'Ready',      count: counts().ready },
+            { value: 'PROCESSING', label: 'Processing', count: counts().processing },
+            { value: 'FAILED',     label: 'Failed',     count: counts().failed }
+          ]; track tab.value) {
+            <button (click)="setStatusFilter(tab.value)"
+                    class="px-3 py-2 rounded-xl border text-xs font-body transition-all"
+                    [class.bg-vroom-accent]="statusFilter() === tab.value"
+                    [class.border-vroom-accent]="statusFilter() === tab.value"
+                    [class.text-white]="statusFilter() === tab.value"
+                    [class.bg-vroom-surface]="statusFilter() !== tab.value"
+                    [class.border-vroom-border]="statusFilter() !== tab.value"
+                    [class.text-vroom-text-dim]="statusFilter() !== tab.value">
+              {{ tab.label }}
+              <span class="ml-1.5 font-body font-bold tabular-nums">{{ tab.count }}</span>
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- ══ LOADING ══ -->
+      @if (isLoading()) {
+        @if (viewMode() === 'grid') {
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            @for (s of skeletons; track $index) {
+              <div class="card rounded-2xl overflow-hidden animate-pulse">
+                <div class="aspect-video bg-vroom-surface"></div>
+                <div class="p-4 space-y-2">
+                  <div class="h-3.5 bg-vroom-surface rounded-full w-3/4"></div>
+                  <div class="h-2.5 bg-vroom-surface rounded-full w-1/2"></div>
+                </div>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="card rounded-2xl overflow-hidden">
+            <div class="divide-y divide-vroom-border">
+              @for (s of skeletons; track $index) {
+                <div class="flex items-center gap-4 px-6 py-4 animate-pulse">
+                  <div class="w-24 h-14 rounded-xl bg-vroom-surface flex-shrink-0"></div>
+                  <div class="flex-1 space-y-2">
+                    <div class="h-3.5 bg-vroom-surface rounded-full w-1/3"></div>
+                    <div class="h-2.5 bg-vroom-surface rounded-full w-1/5"></div>
+                  </div>
+                  <div class="h-6 w-20 bg-vroom-surface rounded-lg"></div>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      }
+
+      @else if (videos().length === 0) {
+        <!-- ══ EMPTY ══ -->
+        <div class="flex flex-col items-center justify-center py-28 text-center">
+          <div class="text-5xl mb-4">🎬</div>
+          <h2 class="font-display font-bold text-xl text-vroom-text mb-2">No videos yet</h2>
+          <p class="text-vroom-text-dim font-body text-sm mb-6 max-w-xs">Upload your first video to attach it to a scenario and start building interactive lessons.</p>
+          <label class="btn-primary inline-flex items-center gap-2 text-sm cursor-pointer">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            Upload First Video
+            <input type="file" accept="video/*" class="hidden" (change)="onFileChange($event)"/>
+          </label>
+        </div>
+      }
+
+      @else if (filtered().length === 0) {
+        <!-- ══ NO SEARCH RESULTS ══ -->
+        <div class="card rounded-2xl py-16 text-center">
+          <p class="text-vroom-muted font-body text-sm">No videos match your search.</p>
+          <button (click)="searchQuery.set(''); statusFilter.set('ALL')"
+                  class="mt-3 text-xs font-body text-vroom-accent hover:underline">Clear filters</button>
+        </div>
+      }
+
+      @else if (viewMode() === 'grid') {
+        <!-- ══ GRID VIEW ══ -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          @for (v of filtered(); track v.id) {
+            @if (confirmDeleteId() === v.id) {
+              <div class="card rounded-2xl p-5 border-red-500/30 bg-red-500/5 animate-fade-in animate-fill-both flex flex-col gap-3">
+                <p class="text-sm font-body font-medium text-red-400">Delete "{{ v.title }}"?</p>
+                <p class="text-xs font-body text-vroom-muted">This cannot be undone. Scenarios using this video will lose their video reference.</p>
+                @if (deleteError()) {
+                  <p class="text-xs font-body text-red-400">{{ deleteError() }}</p>
+                }
+                <div class="flex gap-2">
+                  <button (click)="confirmDelete()" [disabled]="isDeleting()"
+                          class="flex-1 px-3 py-1.5 rounded-xl bg-red-500/15 border border-red-500/30 text-xs font-body text-red-400 hover:bg-red-500/25 transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5">
+                    @if (isDeleting()) {
+                      <svg class="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                      </svg>
+                    }
+                    Delete
+                  </button>
+                  <button (click)="cancelDelete()"
+                          class="flex-1 px-3 py-1.5 rounded-xl border border-vroom-border text-xs font-body text-vroom-text-dim hover:bg-vroom-surface transition-colors">
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            } @else {
+              <div class="card rounded-2xl overflow-hidden group hover:border-vroom-accent/20 transition-all cursor-pointer"
+                   (click)="openPreview(v, $event)">
+
+                <!-- Thumbnail / placeholder -->
+                <div class="aspect-video bg-vroom-surface relative overflow-hidden">
+                  @if (v.thumbnailUrl) {
+                    <img [src]="v.thumbnailUrl" [alt]="v.title" class="w-full h-full object-cover"/>
+                  } @else {
+                    <div class="w-full h-full flex items-center justify-center"
+                         style="background: linear-gradient(135deg, #0d0d1a, #141428)">
+                      <svg class="w-10 h-10 text-vroom-muted/30" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z"/>
+                      </svg>
+                    </div>
+                  }
+
+                  <!-- Duration badge -->
+                  @if (v.durationSeconds) {
+                    <div class="absolute bottom-2 right-2 px-1.5 py-0.5 rounded-md bg-black/70 text-white font-mono text-xs">
+                      {{ formatDuration(v.durationSeconds) }}
+                    </div>
+                  }
+
+                  <!-- Play overlay -->
+                  @if (v.status === VideoStatus.READY) {
+                    <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <div class="w-12 h-12 rounded-full bg-white/20 backdrop-blur flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M8 5v14l11-7z"/>
+                        </svg>
+                      </div>
+                    </div>
+                  }
+
+                  <!-- Status overlay for non-ready -->
+                  @if (v.status !== VideoStatus.READY) {
+                    <div class="absolute inset-0 bg-black/60 flex items-center justify-center">
+                      <span class="text-xs font-body font-medium px-2.5 py-1 rounded-lg border flex items-center gap-1.5"
+                            [class]="statusBadge(v.status)">
+                        <span class="w-1.5 h-1.5 rounded-full" [class]="statusDot(v.status)"></span>
+                        {{ v.status }}
+                      </span>
+                    </div>
+                  }
+                </div>
+
+                <!-- Card body -->
+                <div class="p-4">
+                  <div class="flex items-start justify-between gap-2 mb-2">
+                    <p class="font-body text-sm font-medium text-vroom-text truncate flex-1">{{ v.title }}</p>
+                    <!-- Actions -->
+                    <div class="flex items-center gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button (click)="useInScenario(v); $event.stopPropagation()"
+                              class="w-6 h-6 rounded-lg bg-vroom-surface border border-vroom-border flex items-center justify-center text-vroom-muted hover:text-vroom-accent hover:border-vroom-accent/30 transition-all"
+                              title="Use in scenario">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+                        </svg>
+                      </button>
+                      <button (click)="promptDelete(v.id, $event)"
+                              class="w-6 h-6 rounded-lg bg-vroom-surface border border-vroom-border flex items-center justify-center text-vroom-muted hover:text-red-400 hover:border-red-500/30 transition-all"
+                              title="Delete">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center gap-3 text-xs font-body text-vroom-muted">
+                    <span class="font-body font-bold tabular-nums">{{ formatBytes(v.fileSizeBytes) }}</span>
+                    @if (v.resolution) { <span>· {{ v.resolution }}</span> }
+                    <span class="ml-auto">{{ relativeTime(v.createdAt) }}</span>
+                  </div>
+                </div>
+              </div>
+            }
+          }
+        </div>
+      }
+
+      @else {
+        <!-- ══ LIST VIEW ══ -->
+        <div class="card rounded-2xl overflow-hidden">
+
+          <!-- Table header -->
+          <div class="hidden lg:grid grid-cols-12 gap-4 px-6 py-3 border-b border-vroom-border bg-vroom-surface/50 text-xs font-body text-vroom-muted">
+            <button (click)="setSort('title')" class="col-span-5 flex items-center gap-1 hover:text-vroom-text transition-colors text-left">
+              Video <span class="font-mono text-vroom-subtle">{{ sortIcon('title') }}</span>
+            </button>
+            <button (click)="setSort('status')" class="col-span-2 flex items-center gap-1 hover:text-vroom-text transition-colors">
+              Status <span class="font-mono text-vroom-subtle">{{ sortIcon('status') }}</span>
+            </button>
+            <button (click)="setSort('size')" class="col-span-2 flex items-center gap-1 hover:text-vroom-text transition-colors">
+              Size <span class="font-mono text-vroom-subtle">{{ sortIcon('size') }}</span>
+            </button>
+            <button (click)="setSort('views')" class="col-span-1 flex items-center gap-1 hover:text-vroom-text transition-colors">
+              Views <span class="font-mono text-vroom-subtle">{{ sortIcon('views') }}</span>
+            </button>
+            <button (click)="setSort('created')" class="col-span-2 flex items-center gap-1 hover:text-vroom-text transition-colors">
+              Uploaded <span class="font-mono text-vroom-subtle">{{ sortIcon('created') }}</span>
+            </button>
+          </div>
+
+          <div class="divide-y divide-vroom-border">
+            @for (v of filtered(); track v.id) {
+
+              @if (confirmDeleteId() === v.id) {
+                <div class="px-6 py-4 bg-red-500/5 border-l-2 border-red-500/40 animate-fade-in animate-fill-both">
+                  <p class="text-sm font-body font-medium text-red-400 mb-1">Delete "{{ v.title }}"?</p>
+                  <p class="text-xs font-body text-vroom-muted mb-4">This cannot be undone. Scenarios using this video will lose their video reference.</p>
+                  @if (deleteError()) {
+                    <p class="text-xs font-body text-red-400 mb-3">{{ deleteError() }}</p>
+                  }
+                  <div class="flex gap-3">
+                    <button (click)="confirmDelete()" [disabled]="isDeleting()"
+                            class="px-4 py-1.5 rounded-xl bg-red-500/15 border border-red-500/30 text-xs font-body text-red-400 hover:bg-red-500/25 transition-colors disabled:opacity-50 flex items-center gap-2">
+                      @if (isDeleting()) {
+                        <svg class="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                        </svg>
+                      }
+                      Yes, delete
+                    </button>
+                    <button (click)="cancelDelete()"
+                            class="px-4 py-1.5 rounded-xl border border-vroom-border text-xs font-body text-vroom-text-dim hover:bg-vroom-surface transition-colors">
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              } @else {
+                <div class="group grid grid-cols-1 lg:grid-cols-12 gap-2 lg:gap-4 px-6 py-4 hover:bg-vroom-surface/30 transition-colors cursor-pointer"
+                     (click)="openPreview(v, $event)">
+
+                  <!-- Thumbnail + title (col-span-5) -->
+                  <div class="col-span-5 flex items-center gap-3 min-w-0">
+                    <div class="w-24 h-14 rounded-xl bg-vroom-surface border border-vroom-border overflow-hidden flex-shrink-0 relative">
+                      @if (v.thumbnailUrl) {
+                        <img [src]="v.thumbnailUrl" [alt]="v.title" class="w-full h-full object-cover"/>
+                      } @else {
+                        <div class="w-full h-full flex items-center justify-center" style="background: linear-gradient(135deg, #0d0d1a, #141428)">
+                          <svg class="w-5 h-5 text-vroom-muted/40" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M8 5v14l11-7z"/>
+                          </svg>
+                        </div>
+                      }
+                      @if (v.durationSeconds) {
+                        <div class="absolute bottom-1 right-1 px-1 py-0 rounded text-white font-mono text-[10px] bg-black/70">
+                          {{ formatDuration(v.durationSeconds) }}
+                        </div>
+                      }
+                    </div>
+                    <div class="min-w-0">
+                      <p class="font-body text-sm font-medium text-vroom-text truncate">{{ v.title }}</p>
+                      <p class="text-xs font-body text-vroom-muted truncate">{{ v.originalFilename }}</p>
+                    </div>
+                  </div>
+
+                  <!-- Status (col-span-2) -->
+                  <div class="col-span-2 flex items-center">
+                    <span class="text-xs font-body font-medium px-2 py-1 rounded-lg border flex items-center gap-1.5"
+                          [class]="statusBadge(v.status)">
+                      <span class="w-1.5 h-1.5 rounded-full" [class]="statusDot(v.status)"></span>
+                      {{ v.status }}
+                    </span>
+                  </div>
+
+                  <!-- Size (col-span-2) -->
+                  <div class="col-span-2 flex items-center">
+                    <span class="text-sm font-body font-bold tabular-nums text-vroom-text-dim">{{ formatBytes(v.fileSizeBytes) }}</span>
+                  </div>
+
+                  <!-- Views (col-span-1) -->
+                  <div class="col-span-1 flex items-center">
+                    <span class="text-sm font-body font-bold tabular-nums text-vroom-text-dim">{{ v.viewCount | number }}</span>
+                  </div>
+
+                  <!-- Uploaded + actions (col-span-2) -->
+                  <div class="col-span-2 flex items-center justify-between gap-2">
+                    <span class="text-sm font-body text-vroom-muted">{{ relativeTime(v.createdAt) }}</span>
+                    <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                      <button (click)="useInScenario(v); $event.stopPropagation()"
+                              class="w-7 h-7 rounded-lg bg-vroom-surface border border-vroom-border flex items-center justify-center text-vroom-muted hover:text-vroom-accent hover:border-vroom-accent/30 transition-all"
+                              title="Use in scenario">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+                        </svg>
+                      </button>
+                      <button (click)="promptDelete(v.id, $event)"
+                              class="w-7 h-7 rounded-lg bg-vroom-surface border border-vroom-border flex items-center justify-center text-vroom-muted hover:text-red-400 hover:border-red-500/30 transition-all"
+                              title="Delete">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              }
+            }
+          </div>
+        </div>
+      }
+
+    }
+  </div>
+
+</div>
+
+<!-- ══ VIDEO PREVIEW MODAL ══ -->
+@if (previewVideo()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in animate-fill-both"
+       (click)="closePreview()">
+    <div class="absolute inset-0 bg-black/80 backdrop-blur-sm"></div>
+
+    <div class="relative z-10 w-full max-w-3xl bg-vroom-dark border border-vroom-border rounded-2xl overflow-hidden shadow-2xl"
+         (click)="$event.stopPropagation()">
+
+      <!-- Modal header -->
+      <div class="flex items-center justify-between px-5 py-4 border-b border-vroom-border">
+        <div class="min-w-0">
+          <p class="font-body text-sm font-medium text-vroom-text truncate">{{ previewVideo()!.title }}</p>
+          <p class="text-xs font-body text-vroom-muted">
+            <span class="font-body font-bold tabular-nums">{{ formatBytes(previewVideo()!.fileSizeBytes) }}</span>
+            @if (previewVideo()!.durationSeconds) { · <span class="font-body font-bold tabular-nums">{{ formatDuration(previewVideo()!.durationSeconds) }}</span> }
+            @if (previewVideo()!.resolution) { · {{ previewVideo()!.resolution }} }
+          </p>
+        </div>
+        <button (click)="closePreview()"
+                class="w-8 h-8 rounded-xl bg-vroom-surface border border-vroom-border flex items-center justify-center text-vroom-muted hover:text-vroom-text transition-all flex-shrink-0 ml-4">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Video player -->
+      <div class="aspect-video bg-black relative">
+        @if (isLoadingPreview()) {
+          <div class="absolute inset-0 flex items-center justify-center">
+            <svg class="w-8 h-8 text-vroom-accent animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+            </svg>
+          </div>
+        } @else if (blobPreviewUrl()) {
+          <video class="w-full h-full" [src]="blobPreviewUrl()!" controls preload="metadata"></video>
+        }
+      </div>
+
+      <!-- Modal footer -->
+      <div class="flex items-center justify-between px-5 py-4 border-t border-vroom-border">
+        <div class="flex items-center gap-3 text-xs font-body text-vroom-muted">
+          <span class="px-2 py-1 rounded-lg border flex items-center gap-1.5"
+                [class]="statusBadge(previewVideo()!.status)">
+            <span class="w-1.5 h-1.5 rounded-full" [class]="statusDot(previewVideo()!.status)"></span>
+            {{ previewVideo()!.status }}
+          </span>
+          <span><span class="font-body font-bold tabular-nums">{{ previewVideo()!.viewCount | number }}</span> views</span>
+          <span>Uploaded {{ relativeTime(previewVideo()!.createdAt) }}</span>
+        </div>
+        <button (click)="useInScenario(previewVideo()!)"
+                class="btn-primary text-xs flex items-center gap-1.5">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+          </svg>
+          Use in Scenario
+        </button>
+      </div>
+    </div>
+  </div>
+}
