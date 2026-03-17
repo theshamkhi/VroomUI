@@ -1,4 +1,4 @@
-<div class="min-h-screen">
+<div class="min-h-screen bg-vroom-black">
 
   <!-- ═══════════ LOADING ═══════════ -->
   @if (isLoading()) {
@@ -16,7 +16,6 @@
   }
 
   @else if (hasError()) {
-    <!-- ═══════════ ERROR ═══════════ -->
     <div class="flex items-center justify-center min-h-screen px-6">
       <div class="text-center max-w-sm">
         <div class="text-5xl mb-4">⚠️</div>
@@ -29,6 +28,7 @@
 
   @else {
     <!-- ═══════════ MAIN CONTENT ═══════════ -->
+
     <div class="max-w-7xl mx-auto px-4 lg:px-8 py-8 space-y-8 animate-fade-in">
 
       <!-- ─── GREETING BANNER ─── -->
@@ -67,14 +67,14 @@
               <div class="w-16 h-16 rounded-full"
                    [style]="'background: conic-gradient(#FF4D1C ' + levelProgress() + '%, #1E1E2E ' + levelProgress() + '%); padding: 5px;'">
                 <div class="w-full h-full rounded-full bg-vroom-surface flex items-center justify-center">
-                  <span class="text-lg num-value text-vroom-text leading-none">{{ currentLevel() }}</span>
+                  <span class="text-lg font-display font-bold text-vroom-text leading-none">{{ currentLevel() }}</span>
                 </div>
               </div>
             </div>
             <div>
               <div class="font-display font-semibold text-vroom-text">Level {{ currentLevel() }}</div>
               <div class="text-xs text-vroom-muted font-body mt-0.5">{{ pointsToNextLevel() }} pts to next</div>
-              <div class="text-xs text-vroom-accent num-value mt-1">{{ totalPoints() }} total pts</div>
+              <div class="text-xs text-vroom-accent font-mono mt-1">{{ totalPoints() }} total pts</div>
             </div>
           </div>
         </div>
@@ -82,7 +82,7 @@
 
 
       <!-- ─── STAT CARDS ROW ─── -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
 
         <!-- Completed -->
         <div class="card rounded-2xl p-5 animate-slide-up animate-fill-both animate-delay-100">
@@ -92,7 +92,7 @@
             </div>
             <span class="text-xs font-body text-vroom-muted">Total</span>
           </div>
-          <div class="text-2xl num-value text-vroom-text">{{ completedCount() }}</div>
+          <div class="text-3xl font-display font-bold text-vroom-text mb-1">{{ completedCount() }}</div>
           <div class="text-sm font-body text-vroom-text-dim">Completed</div>
         </div>
 
@@ -104,7 +104,7 @@
             </div>
             <span class="text-xs font-body text-vroom-muted">Active</span>
           </div>
-          <div class="text-2xl num-value text-vroom-text mb-1">{{ inProgressCount() }}</div>
+          <div class="text-3xl font-display font-bold text-vroom-text mb-1">{{ inProgressCount() }}</div>
           <div class="text-sm font-body text-vroom-text-dim">In Progress</div>
         </div>
 
@@ -116,7 +116,7 @@
             </div>
             <span class="text-xs font-body text-vroom-muted">Average</span>
           </div>
-          <div class="text-2xl num-value mb-1" [class]="scoreColor(averageScore())">
+          <div class="text-3xl font-display font-bold mb-1" [class]="scoreColor(averageScore())">
             {{ averageScore() > 0 ? averageScore() + '%' : '—' }}
           </div>
           <div class="text-sm font-body text-vroom-text-dim">Avg Score</div>
@@ -130,7 +130,7 @@
             </div>
             <span class="text-xs font-body text-vroom-muted">Earned</span>
           </div>
-          <div class="text-2xl num-value text-vroom-text mb-1">{{ badges().length }}</div>
+          <div class="text-3xl font-display font-bold text-vroom-text mb-1">{{ badges().length }}</div>
           <div class="text-sm font-body text-vroom-text-dim">Badges</div>
         </div>
       </div>
@@ -322,6 +322,79 @@
         </div>
       </div>
 
+
+      <!-- ─── ASSIGNMENTS WIDGET ─── -->
+      @if (pendingAssignments().length > 0) {
+        <div class="card rounded-2xl overflow-hidden animate-fade-in">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-vroom-border">
+            <div class="flex items-center gap-2.5">
+              <div class="w-7 h-7 rounded-lg bg-vroom-accent/10 border border-vroom-accent/20 flex items-center justify-center">
+                <svg class="w-3.5 h-3.5 text-vroom-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                </svg>
+              </div>
+              <h2 class="font-display font-semibold text-vroom-text text-sm">Assigned to You</h2>
+              <span class="font-body font-bold tabular-nums text-xs bg-vroom-accent/10 border border-vroom-accent/20 text-vroom-accent px-2 py-0.5 rounded-lg">
+                {{ pendingAssignments().length }}
+              </span>
+            </div>
+          </div>
+
+          <div class="divide-y divide-vroom-border">
+            @for (a of pendingAssignments(); track a.id) {
+              <a [routerLink]="['/scenarios', a.scenarioId]"
+                 class="flex items-center gap-4 px-6 py-4 hover:bg-vroom-surface/30 transition-colors group">
+
+                <!-- Status indicator -->
+                <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 border"
+                     [class.bg-red-500\10]="a.status === AssignmentStatus.OVERDUE"
+                [class.border-red-500\25]="a.status === AssignmentStatus.OVERDUE"
+                [class.bg-amber-500\10]="a.status === AssignmentStatus.PENDING"
+                [class.border-amber-500\25]="a.status === AssignmentStatus.PENDING">
+                @if (a.status === AssignmentStatus.OVERDUE) {
+                  <svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                  </svg>
+                } @else {
+                  <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                }
+                </div>
+
+                <!-- Info -->
+                <div class="flex-1 min-w-0">
+                  <p class="font-body text-sm font-medium text-vroom-text truncate group-hover:text-vroom-accent transition-colors">
+                    {{ a.scenarioTitle }}
+                  </p>
+                  <div class="flex items-center gap-2 mt-0.5">
+                    @if (a.status === AssignmentStatus.OVERDUE) {
+                      <span class="text-xs font-body text-red-400 font-semibold">Overdue</span>
+                    } @else {
+                      <span class="text-xs font-body text-vroom-muted">Assigned by your instructor</span>
+                    }
+                    @if (a.dueDate) {
+                      <span class="text-vroom-border">·</span>
+                      <span class="text-xs font-body" [class.text-red-400]="a.status === AssignmentStatus.OVERDUE" [class.text-vroom-muted]="a.status !== AssignmentStatus.OVERDUE">
+                        Due {{ formatDate(a.dueDate) }}
+                      </span>
+                    }
+                    @if (a.note) {
+                      <span class="text-vroom-border">·</span>
+                      <span class="text-xs font-body text-vroom-muted italic truncate max-w-32">{{ a.note }}</span>
+                    }
+                  </div>
+                </div>
+
+                <!-- Arrow -->
+                <svg class="w-4 h-4 text-vroom-muted group-hover:text-vroom-accent transition-colors flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+              </a>
+            }
+          </div>
+        </div>
+      }
 
       <!-- ─── POPULAR SCENARIOS GRID ─── -->
       @if (scenariosError()) {

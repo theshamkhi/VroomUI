@@ -185,9 +185,9 @@ export class LandingComponent implements OnInit, OnDestroy {
 
   dashboardRoute(): string {
     const role = this.authService.currentUser()?.role;
-    return (role === Role.INSTRUCTOR || role === Role.ADMIN)
-      ? '/dashboard/instructor'
-      : '/dashboard';
+    if (role === Role.ADMIN) return '/admin/dashboard';
+    if (role === Role.INSTRUCTOR) return '/dashboard/instructor';
+    return '/dashboard';
   }
 
   ngOnInit(): void {

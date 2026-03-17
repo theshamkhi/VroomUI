@@ -5,7 +5,7 @@ import { forkJoin, of, catchError } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { DashboardService } from '../../../core/services/dashboard.service';
 import { Progress, CompletionStatus, StudentBadge } from '../../../shared/models/progress.model';
-import { Scenario, Difficulty } from '../../../shared/models/scenario.model';
+import { Scenario, Difficulty, Assignment, AssignmentStatus } from '../../../shared/models/scenario.model';
 import { ProgressForScenarioPipe } from '../../../shared/pipes/progress-for-scenario.pipe';
 
 @Component({
@@ -29,6 +29,9 @@ export class StudentDashboardComponent implements OnInit {
   progressList = signal<Progress[]>([]);
   badges = signal<StudentBadge[]>([]);
   popularScenarios = signal<Scenario[]>([]);
+
+  assignments = signal<Assignment[]>([]);
+  assignmentsError = signal(false);
 
   // Computed stats
   completedCount = computed(() =>
@@ -54,6 +57,20 @@ export class StudentDashboardComponent implements OnInit {
     if (!completed.length) return 0;
     return Math.round(completed.reduce((sum, p) => sum + p.highestScore, 0) / completed.length);
   });
+
+  pendingAssignments = computed(() =>
+    this.assignments().filter(a =>
+      a.status === AssignmentStatus.PENDING || a.status === AssignmentStatus.OVERDUE
+    ).sort((a, b) => {
+      // overdue first, then by due date
+      if (a.status === AssignmentStatus.OVERDUE && b.status !== AssignmentStatus.OVERDUE) return -1;
+      if (b.status === AssignmentStatus.OVERDUE && a.status !== AssignmentStatus.OVERDUE) return 1;
+      if (a.dueDate && b.dueDate) return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+      return 0;
+    })
+  );
+
+  readonly AssignmentStatus = AssignmentStatus;
 
   // Continue where you left off
   inProgressScenarios = computed(() =>
@@ -110,11 +127,15 @@ export class StudentDashboardComponent implements OnInit {
       popular: this.dashboardService.getPopularScenarios(8).pipe(
         catchError(() => { this.scenariosError.set(true); return of([]); })
       ),
+      assignments: this.dashboardService.getMyAssignments().pipe(
+        catchError(() => { this.assignmentsError.set(true); return of([]); })
+      ),
     }).subscribe({
-      next: ({ progress, badges, popular }) => {
+      next: ({ progress, badges, popular, assignments }) => {
         this.progressList.set(progress);
         this.badges.set(badges);
         this.popularScenarios.set(popular);
+        this.assignments.set(assignments ?? []);
         this.isLoading.set(false);
       },
       error: () => {
@@ -130,6 +151,7 @@ export class StudentDashboardComponent implements OnInit {
     this.progressError.set(false);
     this.badgesError.set(false);
     this.scenariosError.set(false);
+    this.assignmentsError.set(false);
     this.ngOnInit();
   }
 
@@ -187,15 +209,15 @@ export class StudentDashboardComponent implements OnInit {
     return `${days}d ago`;
   }
 
+  formatDate(d?: string): string {
+    if (!d) return '—';
+    return new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+  }
+
   scoreColor(score: number): string {
     if (score >= 80) return 'text-vroom-green';
     if (score >= 60) return 'text-vroom-amber';
     return 'text-red-400';
   }
 
-  circumference = 2 * Math.PI * 36; // r=36
-
-  dashOffset(pct: number): number {
-    return this.circumference - (pct / 100) * this.circumference;
-  }
 }
