@@ -4,8 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Progress } from '../../shared/models/progress.model';
 import { StudentBadge } from '../../shared/models/progress.model';
-import { Scenario } from '../../shared/models/scenario.model';
-import { Student } from '../../shared/models/user.model';
+import { Scenario, Assignment } from '../../shared/models/scenario.model';
 
 @Injectable({ providedIn: 'root' })
 export class DashboardService {
@@ -31,5 +30,9 @@ export class DashboardService {
 
   getAllScenarios(): Observable<Scenario[]> {
     return this.http.get<Scenario[]>(`${this.api}/scenarios`);
+  }
+
+  getMyAssignments(): Observable<Assignment[]> {
+    return this.http.get<Assignment[]>(`${this.api}/progress/my-assignments`);
   }
 }

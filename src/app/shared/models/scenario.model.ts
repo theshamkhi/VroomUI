@@ -104,3 +104,29 @@ export interface InteractionPoint {
   orderIndex: number;
   mandatory: boolean;
 }
+export enum AssignmentStatus {
+  PENDING   = 'PENDING',
+  COMPLETED = 'COMPLETED',
+  OVERDUE   = 'OVERDUE',
+}
+
+export interface Assignment {
+  id: string;
+  studentId: string;
+  studentName: string;
+  studentEmail: string;
+  scenarioId: string;
+  scenarioTitle: string;
+  assignedAt: string;
+  dueDate?: string;
+  note?: string;
+  completedAt?: string;
+  status: AssignmentStatus;
+}
+
+export interface CreateAssignmentRequest {
+  studentId: string;
+  scenarioId: string;
+  dueDate?: string;
+  note?: string;
+}
