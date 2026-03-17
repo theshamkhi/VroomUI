@@ -70,10 +70,6 @@ Vroom uses a custom dark theme built on top of Tailwind:
 | Token | Value | Usage |
 |---|---|---|
 | `vroom-black` | `#0A0A0F` | Page backgrounds |
-| `vroom-dark` | — | Sidebar, header surfaces |
-| `vroom-surface` | — | Card inner surfaces |
-| `vroom-card` | — | Card backgrounds |
-| `vroom-border` | — | All borders |
 | `vroom-accent` | `#FF4D1C` | Primary CTA, highlights |
 | Amber | `#F59E0B` | Warnings, pending states |
 | Green | `#10B981` | Success, passed states |
@@ -116,37 +112,6 @@ src/app/
 
 ---
 
-## 🔌 API
-
-The frontend connects to a **Spring Boot 3** backend at `http://localhost:8080`.
-
-Configure the base URL in:
-```
-src/environments/environment.ts        # development
-src/environments/environment.prod.ts   # production
-```
-
-```typescript
-export const environment = {
-  production: false,
-  apiUrl: 'http://localhost:8080/api'
-};
-```
-
-### Key endpoint groups
-
-| Prefix | Access | Description |
-|---|---|---|
-| `/api/auth/**` | Public | Register, login, refresh, verify, reset |
-| `/api/scenarios/**` | Authenticated | Scenario CRUD and browsing |
-| `/api/progress/**` | Student / Instructor | Learning progress tracking |
-| `/api/instructor/**` | Instructor | Students, assignments, analytics |
-| `/api/admin/**` | Admin | Platform management |
-| `/api/badges/**` | Authenticated | Badge definitions and earned badges |
-| `/api/videos/**` | Instructor (write) | Video library |
-
----
-
 ## 🚀 Getting Started
 
 ### Prerequisites
@@ -169,14 +134,6 @@ npm start
 ```
 
 Navigate to **[http://localhost:4200](http://localhost:4200)**.
-
-### Build for production
-
-```bash
-npm run build
-```
-
-Output is in `dist/`. The app uses lazy-loaded routes so the initial bundle stays small.
 
 ---
 
