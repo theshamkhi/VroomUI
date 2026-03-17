@@ -133,11 +133,17 @@ export class AuthService {
 
   private redirectAfterLogin(): void {
     const user = this._currentUser();
-    if (user?.role === Role.INSTRUCTOR || user?.role === Role.ADMIN) {
-      this.router.navigate(['/dashboard/instructor']);
-    } else {
-      this.router.navigate(['/dashboard']);
+    if (user?.role === Role.ADMIN) {
+      this.router.navigate(['/admin/dashboard']);
+      return;
     }
+
+    if (user?.role === Role.INSTRUCTOR) {
+      this.router.navigate(['/dashboard/instructor']);
+      return;
+    }
+
+    this.router.navigate(['/dashboard']);
   }
 
   private clearSession(): void {

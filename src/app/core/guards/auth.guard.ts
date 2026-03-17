@@ -54,7 +54,12 @@ export const dashboardRedirectGuard: CanActivateFn = () => {
   const router = inject(Router);
 
   const role = authService.currentUser()?.role;
-  if (role === Role.INSTRUCTOR || role === Role.ADMIN) {
+  if (role === Role.ADMIN) {
+    router.navigate(['/admin/dashboard']);
+    return false;
+  }
+
+  if (role === Role.INSTRUCTOR) {
     router.navigate(['/dashboard/instructor']);
     return false;
   }
