@@ -1,0 +1,295 @@
+<div class="min-h-full bg-vroom-black">
+
+  <!-- ══ HEADER ══ -->
+  <div class="border-b border-vroom-border bg-vroom-dark px-6 lg:px-8 py-5">
+    <div class="max-w-7xl mx-auto flex items-center justify-between gap-4 flex-wrap">
+      <div>
+        <h1 class="text-2xl font-display font-bold text-vroom-text">Instructor Management</h1>
+        @if (!isLoading()) {
+          <p class="text-vroom-text-dim font-body text-sm mt-0.5">
+            <span class="font-body font-bold tabular-nums">{{ totalElements() }}</span> instructors
+            @if (counts().pending > 0) {
+              · <span class="text-amber-400 font-body font-bold tabular-nums animate-pulse">{{ counts().pending }} pending approval</span>
+            }
+          </p>
+        }
+      </div>
+    </div>
+  </div>
+
+  <div class="max-w-7xl mx-auto px-4 lg:px-8 py-6">
+
+    <!-- ══ TOAST ══ -->
+    @if (actionMessage()) {
+      <div class="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl border shadow-lg animate-fade-in"
+           [class.bg-green-500\10]="actionMessage()!.ok" [class.border-green-500\30]="actionMessage()!.ok" [class.text-green-400]="actionMessage()!.ok"
+        [class.bg-red-500\10]="!actionMessage()!.ok" [class.border-red-500\30]="!actionMessage()!.ok" [class.text-red-400]="!actionMessage()!.ok">
+      <span class="text-sm font-body">{{ actionMessage()!.ok ? '✓' : '✗' }} {{ actionMessage()!.text }}</span>
+      </div>
+    }
+
+    <div class="flex gap-6">
+
+      <!-- ══ LEFT — LIST ══ -->
+      <div class="flex-1 min-w-0 space-y-5">
+
+        <!-- Filters -->
+        <div class="flex flex-col sm:flex-row gap-3">
+          <div class="relative flex-1">
+            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-vroom-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input [(ngModel)]="searchQuery" [ngModelOptions]="{standalone:true}"
+                   (ngModelChange)="searchQuery.set($event)"
+                   placeholder="Search by name, email, or school..."
+                   class="w-full bg-vroom-surface border border-vroom-border rounded-xl pl-9 pr-4 py-2.5 text-sm font-body text-vroom-text placeholder-vroom-muted focus:outline-none focus:border-vroom-accent transition-colors"/>
+          </div>
+          <div class="flex gap-2">
+            @for (tab of [
+              { value: 'ALL',      label: 'All',      count: counts().all },
+              { value: 'PENDING',  label: 'Pending',  count: counts().pending },
+              { value: 'APPROVED', label: 'Approved', count: counts().approved }
+            ]; track tab.value) {
+              <button (click)="setStatusFilter(tab.value)"
+                      class="px-3 py-2 rounded-xl border text-xs font-body transition-all flex items-center gap-1.5"
+                      [class.bg-vroom-accent]="statusFilter() === tab.value"
+                      [class.border-vroom-accent]="statusFilter() === tab.value"
+                      [class.text-white]="statusFilter() === tab.value"
+                      [class.bg-vroom-surface]="statusFilter() !== tab.value"
+                      [class.border-vroom-border]="statusFilter() !== tab.value"
+                      [class.text-vroom-text-dim]="statusFilter() !== tab.value">
+                @if (tab.value === 'PENDING' && counts().pending > 0) {
+                  <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+                }
+                {{ tab.label }}
+                <span class="font-body font-bold tabular-nums">{{ tab.count }}</span>
+              </button>
+            }
+          </div>
+        </div>
+
+        <!-- Error -->
+        @if (hasError()) {
+          <div class="card rounded-2xl py-16 text-center">
+            <div class="text-4xl mb-3">⚠️</div>
+            <p class="font-body text-vroom-text mb-4">Couldn't load instructors</p>
+            <button (click)="loadPage(0)" class="btn-primary text-sm">Retry</button>
+          </div>
+        }
+
+        @else {
+          <!-- Cards grid -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+            @if (isLoading()) {
+              @for (s of skeletons; track $index) {
+                <div class="card rounded-2xl p-5 animate-pulse">
+                  <div class="flex items-start gap-3 mb-4">
+                    <div class="w-10 h-10 rounded-full bg-vroom-surface flex-shrink-0"></div>
+                    <div class="flex-1 space-y-2">
+                      <div class="h-3.5 bg-vroom-surface rounded-full w-1/2"></div>
+                      <div class="h-2.5 bg-vroom-surface rounded-full w-2/3"></div>
+                    </div>
+                    <div class="h-6 w-20 bg-vroom-surface rounded-lg"></div>
+                  </div>
+                  <div class="grid grid-cols-3 gap-3">
+                    @for (i of [0,1,2]; track i) {
+                      <div class="h-10 bg-vroom-surface rounded-xl"></div>
+                    }
+                  </div>
+                </div>
+              }
+            }
+
+            @else if (filtered().length === 0) {
+              <div class="col-span-2 card rounded-2xl py-16 text-center">
+                <p class="text-vroom-muted font-body text-sm">No instructors found</p>
+              </div>
+            }
+
+            @else {
+              @for (i of filtered(); track i.id) {
+                <div class="card rounded-2xl p-5 cursor-pointer transition-all hover:border-vroom-accent/40"
+                     [class.border-amber-500\30]="!i.enabled"
+                  [class.border-vroom-border]="i.enabled"
+                  [class.ring-1]="selected()?.id === i.id"
+                  [class.ring-vroom-accent]="selected()?.id === i.id"
+                  (click)="selected.set(i)">
+
+                <div class="flex items-start gap-3 mb-4">
+                  <!-- Avatar -->
+                  <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 border"
+                       [class.bg-blue-500\10]="i.enabled" [class.border-blue-500\20]="i.enabled"
+                  [class.bg-amber-500\10]="!i.enabled" [class.border-amber-500\20]="!i.enabled"
+                  [class.opacity-60]="!i.enabled">
+                  <span class="text-sm font-display font-bold"
+                        [class.text-blue-400]="i.enabled" [class.text-amber-400]="!i.enabled">
+                        {{ initials(i) }}
+                      </span>
+                </div>
+
+                <!-- Info -->
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <p class="font-body font-semibold text-sm text-vroom-text truncate">{{ i.fullName }}</p>
+                    @if (!i.enabled) {
+                      <span class="text-[10px] font-body font-semibold px-1.5 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/25 text-amber-400 flex-shrink-0">PENDING</span>
+                    }
+                  </div>
+                  <p class="font-body text-xs text-vroom-muted truncate">{{ i.email }}</p>
+                  @if (i.drivingSchool) {
+                    <p class="font-body text-xs text-vroom-text-dim truncate mt-0.5">🏫 {{ i.drivingSchool }}</p>
+                  }
+                </div>
+
+                <!-- Approve / Suspend -->
+                @if (!i.enabled) {
+                  <button (click)="$event.stopPropagation(); approve(i)" [disabled]="processingId() === i.id"
+                          class="flex-shrink-0 px-3 py-1.5 rounded-xl bg-green-500/10 border border-green-500/25 text-green-400 hover:bg-green-500/20 text-xs font-body font-semibold transition-colors disabled:opacity-50">
+                    {{ processingId() === i.id ? '...' : 'Approve' }}
+                  </button>
+                } @else {
+                  <button (click)="$event.stopPropagation(); suspend(i)" [disabled]="processingId() === i.id"
+                          class="flex-shrink-0 px-3 py-1.5 rounded-xl bg-vroom-surface border border-vroom-border text-vroom-muted hover:text-amber-400 hover:border-amber-500/30 text-xs font-body transition-colors disabled:opacity-50">
+                    {{ processingId() === i.id ? '...' : 'Suspend' }}
+                  </button>
+                }
+                </div>
+
+                <!-- Stats row -->
+                <div class="grid grid-cols-3 gap-2">
+                  <div class="bg-vroom-surface/50 rounded-xl px-3 py-2 text-center">
+                    <div class="font-body font-bold tabular-nums text-sm text-vroom-text">{{ i.activeStudents ?? 0 }}</div>
+                    <div class="font-body text-[10px] text-vroom-muted mt-0.5">Students</div>
+                  </div>
+                  <div class="bg-vroom-surface/50 rounded-xl px-3 py-2 text-center">
+                    <div class="font-body font-bold tabular-nums text-sm text-vroom-text">
+                      {{ i.averageRating ? i.averageRating.toFixed(1) : '—' }}
+                    </div>
+                    <div class="font-body text-[10px] text-vroom-muted mt-0.5">Rating</div>
+                  </div>
+                  <div class="bg-vroom-surface/50 rounded-xl px-3 py-2 text-center">
+                    <div class="font-body font-bold tabular-nums text-sm text-vroom-text">{{ i.yearsOfExperience ?? '—' }}</div>
+                    <div class="font-body text-[10px] text-vroom-muted mt-0.5">Yrs Exp</div>
+                  </div>
+                </div>
+                </div>
+              }
+            }
+          </div>
+
+          <!-- Pagination -->
+          @if (totalPages() > 1) {
+            <div class="flex items-center justify-between mt-5">
+              <p class="text-xs font-body text-vroom-muted">
+                Page <span class="font-bold tabular-nums text-vroom-text">{{ currentPage() + 1 }}</span> of <span class="font-bold tabular-nums text-vroom-text">{{ totalPages() }}</span>
+              </p>
+              <div class="flex gap-1.5">
+                <button (click)="loadPage(currentPage() - 1)" [disabled]="currentPage() === 0"
+                        class="px-3 py-1.5 rounded-xl text-xs font-body border border-vroom-border text-vroom-text-dim hover:border-vroom-accent hover:text-vroom-text transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
+                  ← Prev
+                </button>
+                <button (click)="loadPage(currentPage() + 1)" [disabled]="currentPage() >= totalPages() - 1"
+                        class="px-3 py-1.5 rounded-xl text-xs font-body border border-vroom-border text-vroom-text-dim hover:border-vroom-accent hover:text-vroom-text transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
+                  Next →
+                </button>
+              </div>
+            </div>
+          }
+        }
+
+      </div>
+
+      <!-- ══ RIGHT — DETAIL PANEL ══ -->
+      @if (selected()) {
+        <div class="w-72 flex-shrink-0 hidden xl:block">
+          <div class="card rounded-2xl overflow-hidden sticky top-6">
+            <div class="px-5 py-4 border-b border-vroom-border flex items-center justify-between">
+              <h3 class="font-display font-semibold text-vroom-text text-sm">Instructor Detail</h3>
+              <button (click)="selected.set(null)" class="text-vroom-muted hover:text-vroom-text transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+            </div>
+
+            <div class="p-5 space-y-5">
+              <!-- Avatar + name -->
+              <div class="text-center">
+                <div class="w-16 h-16 rounded-full mx-auto flex items-center justify-center border mb-3"
+                     [class.bg-blue-500\10]="selected()!.enabled" [class.border-blue-500\20]="selected()!.enabled"
+                [class.bg-amber-500\10]="!selected()!.enabled" [class.border-amber-500\20]="!selected()!.enabled">
+                <span class="text-xl font-display font-bold"
+                      [class.text-blue-400]="selected()!.enabled" [class.text-amber-400]="!selected()!.enabled">
+                    {{ initials(selected()!) }}
+                  </span>
+              </div>
+              <p class="font-body font-semibold text-vroom-text">{{ selected()!.fullName }}</p>
+              <p class="font-body text-xs text-vroom-muted">{{ selected()!.email }}</p>
+              <div class="mt-2">
+                @if (selected()!.enabled) {
+                  <span class="text-xs font-body px-2 py-0.5 rounded-lg bg-green-500/10 border border-green-500/25 text-green-400">Approved</span>
+                } @else {
+                  <span class="text-xs font-body px-2 py-0.5 rounded-lg bg-amber-500/10 border border-amber-500/25 text-amber-400">Pending</span>
+                }
+              </div>
+            </div>
+
+            <!-- Details -->
+            <div class="space-y-2.5 text-xs font-body">
+              @if (selected()!.drivingSchool) {
+                <div class="flex justify-between">
+                  <span class="text-vroom-muted">School</span>
+                  <span class="text-vroom-text font-medium">{{ selected()!.drivingSchool }}</span>
+                </div>
+              }
+              @if (selected()!.licenseNumber) {
+                <div class="flex justify-between">
+                  <span class="text-vroom-muted">License</span>
+                  <span class="text-vroom-text font-mono">{{ selected()!.licenseNumber }}</span>
+                </div>
+              }
+              @if (selected()!.yearsOfExperience != null) {
+                <div class="flex justify-between">
+                  <span class="text-vroom-muted">Experience</span>
+                  <span class="text-vroom-text font-medium">{{ selected()!.yearsOfExperience }} yrs</span>
+                </div>
+              }
+              <div class="flex justify-between">
+                <span class="text-vroom-muted">Joined</span>
+                <span class="text-vroom-text">{{ formatDate(selected()!.createdAt) }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-vroom-muted">Active Students</span>
+                <span class="font-bold tabular-nums text-vroom-text">{{ selected()!.activeStudents ?? 0 }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-vroom-muted">Total Taught</span>
+                <span class="font-bold tabular-nums text-vroom-text">{{ selected()!.totalStudentsTaught ?? 0 }}</span>
+              </div>
+              @if (selected()!.averageRating != null) {
+                <div class="flex justify-between items-center">
+                  <span class="text-vroom-muted">Rating</span>
+                  <span class="text-amber-400">{{ stars(selected()!.averageRating) }} {{ selected()!.averageRating!.toFixed(1) }}</span>
+                </div>
+              }
+            </div>
+
+            <!-- Action button -->
+            <div class="pt-2 border-t border-vroom-border">
+              @if (!selected()!.enabled) {
+                <button (click)="approve(selected()!)" [disabled]="processingId() === selected()!.id"
+                        class="w-full btn-primary text-sm disabled:opacity-50">
+                  {{ processingId() === selected()!.id ? 'Approving...' : '✓ Approve Instructor' }}
+                </button>
+              } @else {
+                <button (click)="suspend(selected()!)" [disabled]="processingId() === selected()!.id"
+                        class="w-full px-4 py-2 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-400 hover:bg-amber-500/20 text-sm font-body font-semibold transition-colors disabled:opacity-50">
+                  {{ processingId() === selected()!.id ? 'Suspending...' : 'Suspend' }}
+                </button>
+              }
+            </div>
+          </div>
+        </div>
+        </div>
+      }
+
+    </div>
+  </div>
+</div>

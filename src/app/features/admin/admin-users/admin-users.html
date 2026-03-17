@@ -1,0 +1,328 @@
+<div class="min-h-full bg-vroom-black">
+
+  <!-- ══ HEADER ══ -->
+  <div class="border-b border-vroom-border bg-vroom-dark px-6 lg:px-8 py-5">
+    <div class="max-w-7xl mx-auto flex items-center justify-between gap-4 flex-wrap">
+      <div>
+        <h1 class="text-2xl font-display font-bold text-vroom-text">User Management</h1>
+        @if (!isLoading()) {
+          <p class="text-vroom-text-dim font-body text-sm mt-0.5">
+            <span class="font-body font-bold tabular-nums">{{ totalElements() }}</span> total users
+            @if (counts().disabled > 0) {
+              · <span class="text-red-400 font-body font-bold tabular-nums">{{ counts().disabled }} disabled</span>
+            }
+          </p>
+        }
+      </div>
+    </div>
+  </div>
+
+  <div class="max-w-7xl mx-auto px-4 lg:px-8 py-6 space-y-5">
+
+    <!-- ══ TOAST ══ -->
+    @if (actionMessage()) {
+      <div class="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl border shadow-lg animate-fade-in"
+           [class.bg-green-500\10]="actionMessage()!.ok"
+        [class.border-green-500\30]="actionMessage()!.ok"
+        [class.text-green-400]="actionMessage()!.ok"
+        [class.bg-red-500\10]="!actionMessage()!.ok"
+        [class.border-red-500\30]="!actionMessage()!.ok"
+        [class.text-red-400]="!actionMessage()!.ok">
+      <span class="text-sm font-body">{{ actionMessage()!.ok ? '✓' : '✗' }} {{ actionMessage()!.text }}</span>
+      </div>
+    }
+
+    <!-- ══ FILTERS ══ -->
+    <div class="flex flex-col sm:flex-row gap-3">
+      <!-- Search -->
+      <div class="relative flex-1">
+        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-vroom-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input [(ngModel)]="searchQuery" [ngModelOptions]="{standalone:true}"
+               (ngModelChange)="searchQuery.set($event)"
+               placeholder="Search by name or email..."
+               class="w-full bg-vroom-surface border border-vroom-border rounded-xl pl-9 pr-4 py-2.5 text-sm font-body text-vroom-text placeholder-vroom-muted focus:outline-none focus:border-vroom-accent transition-colors"/>
+      </div>
+      <!-- Role tabs -->
+      <div class="flex gap-2 flex-wrap">
+        @for (tab of [
+          { value: 'ALL',        label: 'All',         count: counts().all },
+          { value: 'STUDENT',    label: 'Students',    count: counts().students },
+          { value: 'INSTRUCTOR', label: 'Instructors', count: counts().instructors },
+          { value: 'ADMIN',      label: 'Admins',      count: counts().admins }
+        ]; track tab.value) {
+          <button (click)="setRoleFilter(tab.value)"
+                  class="px-3 py-2 rounded-xl border text-xs font-body transition-all flex items-center gap-1.5"
+                  [class.bg-vroom-accent]="roleFilter() === tab.value"
+                  [class.border-vroom-accent]="roleFilter() === tab.value"
+                  [class.text-white]="roleFilter() === tab.value"
+                  [class.bg-vroom-surface]="roleFilter() !== tab.value"
+                  [class.border-vroom-border]="roleFilter() !== tab.value"
+                  [class.text-vroom-text-dim]="roleFilter() !== tab.value">
+            {{ tab.label }}
+            <span class="font-body font-bold tabular-nums">{{ tab.count }}</span>
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- ══ ERROR ══ -->
+    @if (hasError()) {
+      <div class="card rounded-2xl py-16 text-center">
+        <div class="text-4xl mb-3">⚠️</div>
+        <p class="font-body text-vroom-text mb-4">Couldn't load users</p>
+        <button (click)="loadPage(0)" class="btn-primary text-sm">Retry</button>
+      </div>
+    }
+
+    @else {
+      <!-- ══ TABLE ══ -->
+      <div class="card rounded-2xl overflow-hidden">
+        <table class="w-full">
+          <thead>
+          <tr class="border-b border-vroom-border">
+            <th class="text-left px-6 py-3.5">
+              <button (click)="setSort('fullName')" class="flex items-center gap-1 text-xs font-body font-semibold text-vroom-muted hover:text-vroom-text transition-colors uppercase tracking-wide">
+                User
+                @if (sortField() === 'fullName') {
+                  <span class="text-vroom-accent">{{ sortDir() === 'asc' ? '↑' : '↓' }}</span>
+                }
+              </button>
+            </th>
+            <th class="text-left px-4 py-3.5 hidden md:table-cell">
+              <button (click)="setSort('role')" class="flex items-center gap-1 text-xs font-body font-semibold text-vroom-muted hover:text-vroom-text transition-colors uppercase tracking-wide">
+                Role
+                @if (sortField() === 'role') {
+                  <span class="text-vroom-accent">{{ sortDir() === 'asc' ? '↑' : '↓' }}</span>
+                }
+              </button>
+            </th>
+            <th class="text-left px-4 py-3.5 hidden lg:table-cell">
+              <button (click)="setSort('createdAt')" class="flex items-center gap-1 text-xs font-body font-semibold text-vroom-muted hover:text-vroom-text transition-colors uppercase tracking-wide">
+                Joined
+                @if (sortField() === 'createdAt') {
+                  <span class="text-vroom-accent">{{ sortDir() === 'asc' ? '↑' : '↓' }}</span>
+                }
+              </button>
+            </th>
+            <th class="text-left px-4 py-3.5 hidden lg:table-cell">
+              <span class="text-xs font-body font-semibold text-vroom-muted uppercase tracking-wide">Last Login</span>
+            </th>
+            <th class="text-left px-4 py-3.5 hidden sm:table-cell">
+              <span class="text-xs font-body font-semibold text-vroom-muted uppercase tracking-wide">Status</span>
+            </th>
+            <th class="text-right px-6 py-3.5">
+              <span class="text-xs font-body font-semibold text-vroom-muted uppercase tracking-wide">Actions</span>
+            </th>
+          </tr>
+          </thead>
+          <tbody class="divide-y divide-vroom-border">
+
+            @if (isLoading()) {
+              @for (s of skeletons; track $index) {
+                <tr class="animate-pulse">
+                  <td class="px-6 py-4">
+                    <div class="flex items-center gap-3">
+                      <div class="w-8 h-8 rounded-full bg-vroom-surface flex-shrink-0"></div>
+                      <div class="space-y-1.5">
+                        <div class="h-3 bg-vroom-surface rounded-full w-28"></div>
+                        <div class="h-2.5 bg-vroom-surface rounded-full w-36"></div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-4 py-4 hidden md:table-cell"><div class="h-5 bg-vroom-surface rounded-lg w-20"></div></td>
+                  <td class="px-4 py-4 hidden lg:table-cell"><div class="h-3 bg-vroom-surface rounded-full w-20"></div></td>
+                  <td class="px-4 py-4 hidden lg:table-cell"><div class="h-3 bg-vroom-surface rounded-full w-16"></div></td>
+                  <td class="px-4 py-4 hidden sm:table-cell"><div class="h-5 bg-vroom-surface rounded-lg w-16"></div></td>
+                  <td class="px-6 py-4"><div class="h-7 bg-vroom-surface rounded-lg w-24 ml-auto"></div></td>
+                </tr>
+              }
+            }
+
+            @else if (filtered().length === 0) {
+              <tr>
+                <td colspan="6" class="py-16 text-center text-vroom-muted font-body text-sm">No users found</td>
+              </tr>
+            }
+
+            @else {
+              @for (u of filtered(); track u.id) {
+                <tr class="hover:bg-vroom-surface/20 transition-colors group">
+                  <!-- User -->
+                  <td class="px-6 py-4">
+                    <div class="flex items-center gap-3">
+                      <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 border"
+                           [class.bg-vroom-accent\15]="u.role === 'ADMIN'"  [class.border-vroom-accent\25]="u.role === 'ADMIN'"
+                      [class.bg-blue-500\10]="u.role === 'INSTRUCTOR'" [class.border-blue-500\20]="u.role === 'INSTRUCTOR'"
+                      [class.bg-vroom-surface]="u.role === 'STUDENT'"   [class.border-vroom-border]="u.role === 'STUDENT'"
+                      [class.opacity-50]="!u.enabled">
+                      <span class="text-xs font-display font-bold"
+                            [class.text-vroom-accent]="u.role === 'ADMIN'"
+                            [class.text-blue-400]="u.role === 'INSTRUCTOR'"
+                            [class.text-vroom-text]="u.role === 'STUDENT'">
+                          {{ initials(u) }}
+                        </span>
+                    </div>
+                    <div [class.opacity-50]="!u.enabled">
+                      <p class="font-body text-sm font-medium text-vroom-text">{{ u.fullName }}</p>
+                      <p class="font-body text-xs text-vroom-muted">{{ u.email }}</p>
+                    </div>
+                    </div>
+                  </td>
+                  <!-- Role -->
+                  <td class="px-4 py-4 hidden md:table-cell">
+                    <span class="text-xs font-body px-2 py-0.5 rounded-lg border" [class]="roleColor(u.role)">
+                      {{ u.role | titlecase }}
+                    </span>
+                  </td>
+                  <!-- Joined -->
+                  <td class="px-4 py-4 hidden lg:table-cell">
+                    <span class="text-xs font-body text-vroom-muted">{{ formatDate(u.createdAt) }}</span>
+                  </td>
+                  <!-- Last login -->
+                  <td class="px-4 py-4 hidden lg:table-cell">
+                    <span class="text-xs font-body text-vroom-muted">{{ relativeTime(u.lastLoginAt) }}</span>
+                  </td>
+                  <!-- Status -->
+                  <td class="px-4 py-4 hidden sm:table-cell">
+                    @if (u.enabled) {
+                      <span class="flex items-center gap-1.5 text-xs font-body text-green-400">
+                        <span class="w-1.5 h-1.5 rounded-full bg-green-400"></span> Active
+                      </span>
+                    } @else {
+                      <span class="flex items-center gap-1.5 text-xs font-body text-red-400">
+                        <span class="w-1.5 h-1.5 rounded-full bg-red-400"></span> Disabled
+                      </span>
+                    }
+                  </td>
+                  <!-- Actions -->
+                  <td class="px-6 py-4">
+                    <div class="flex items-center justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <!-- Change role -->
+                      <button (click)="openRoleModal(u)" title="Change role"
+                              class="w-7 h-7 rounded-lg flex items-center justify-center text-vroom-muted hover:text-blue-400 hover:bg-blue-500/10 border border-transparent hover:border-blue-500/20 transition-all">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+                      </button>
+                      <!-- Toggle status -->
+                      <button (click)="toggleStatus(u)" [title]="u.enabled ? 'Deactivate' : 'Activate'"
+                              class="w-7 h-7 rounded-lg flex items-center justify-center border border-transparent transition-all"
+                              [class.text-vroom-muted]="u.enabled" [class.hover:text-amber-400]="u.enabled"
+                              [class.hover:bg-amber-500\10]="u.enabled" [class.hover:border-amber-500\20]="u.enabled"
+                      [class.text-green-400]="!u.enabled" [class.hover:bg-green-500\10]="!u.enabled"
+                      [class.hover:border-green-500\20]="!u.enabled">
+                      @if (u.enabled) {
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+                      } @else {
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                      }
+                      </button>
+                      <!-- Delete -->
+                      <button (click)="deleteTarget.set(u)" title="Delete user"
+                              class="w-7 h-7 rounded-lg flex items-center justify-center text-vroom-muted hover:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-all">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            }
+
+          </tbody>
+        </table>
+      </div>
+
+      <!-- ══ PAGINATION ══ -->
+      @if (totalPages() > 1) {
+        <div class="flex items-center justify-between">
+          <p class="text-xs font-body text-vroom-muted">
+            Page <span class="font-bold tabular-nums text-vroom-text">{{ currentPage() + 1 }}</span> of
+            <span class="font-bold tabular-nums text-vroom-text">{{ totalPages() }}</span>
+            · <span class="font-bold tabular-nums text-vroom-text">{{ totalElements() }}</span> users
+          </p>
+          <div class="flex gap-1.5">
+            <button (click)="loadPage(currentPage() - 1)" [disabled]="currentPage() === 0"
+                    class="px-3 py-1.5 rounded-xl text-xs font-body border border-vroom-border text-vroom-text-dim hover:border-vroom-accent hover:text-vroom-text transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
+              ← Prev
+            </button>
+            @for (p of pages(); track p) {
+              @if (p <= 2 || p >= totalPages() - 3 || (p >= currentPage() - 1 && p <= currentPage() + 1)) {
+                <button (click)="loadPage(p)"
+                        class="w-8 h-8 rounded-xl text-xs font-body font-bold tabular-nums border transition-colors"
+                        [class.bg-vroom-accent]="p === currentPage()"
+                        [class.border-vroom-accent]="p === currentPage()"
+                        [class.text-white]="p === currentPage()"
+                        [class.border-vroom-border]="p !== currentPage()"
+                        [class.text-vroom-text-dim]="p !== currentPage()"
+                        [class.hover:border-vroom-accent]="p !== currentPage()">
+                  {{ p + 1 }}
+                </button>
+              }
+            }
+            <button (click)="loadPage(currentPage() + 1)" [disabled]="currentPage() >= totalPages() - 1"
+                    class="px-3 py-1.5 rounded-xl text-xs font-body border border-vroom-border text-vroom-text-dim hover:border-vroom-accent hover:text-vroom-text transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
+              Next →
+            </button>
+          </div>
+        </div>
+      }
+    }
+
+  </div>
+</div>
+
+<!-- ══ DELETE CONFIRM MODAL ══ -->
+@if (deleteTarget()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" (click)="deleteTarget.set(null)"></div>
+    <div class="relative bg-vroom-dark border border-red-500/30 rounded-2xl p-6 w-full max-w-sm shadow-xl animate-fade-in">
+      <div class="w-12 h-12 rounded-2xl bg-red-500/10 border border-red-500/25 flex items-center justify-center mx-auto mb-4">
+        <svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+      </div>
+      <h3 class="font-display font-bold text-vroom-text text-center text-lg mb-1">Delete User</h3>
+      <p class="font-body text-sm text-vroom-text-dim text-center mb-6">
+        Are you sure you want to permanently delete <span class="text-vroom-text font-semibold">{{ deleteTarget()?.fullName }}</span>? This cannot be undone.
+      </p>
+      <div class="flex gap-3">
+        <button (click)="deleteTarget.set(null)" class="flex-1 btn-secondary text-sm">Cancel</button>
+        <button (click)="confirmDelete()" [disabled]="isDeleting()"
+                class="flex-1 px-4 py-2 rounded-xl bg-red-500/15 border border-red-500/30 text-red-400 hover:bg-red-500/25 text-sm font-body font-semibold transition-colors disabled:opacity-50">
+          {{ isDeleting() ? 'Deleting...' : 'Delete' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ══ ROLE CHANGE MODAL ══ -->
+@if (roleTarget()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" (click)="roleTarget.set(null)"></div>
+    <div class="relative bg-vroom-dark border border-vroom-border rounded-2xl p-6 w-full max-w-sm shadow-xl animate-fade-in">
+      <h3 class="font-display font-bold text-vroom-text text-lg mb-1">Change Role</h3>
+      <p class="font-body text-sm text-vroom-text-dim mb-5">
+        Update role for <span class="text-vroom-text font-semibold">{{ roleTarget()?.fullName }}</span>
+      </p>
+      <div class="space-y-2 mb-6">
+        @for (r of [Role.STUDENT, Role.INSTRUCTOR, Role.ADMIN]; track r) {
+          <button (click)="newRole.set(r)"
+                  class="w-full flex items-center justify-between px-4 py-3 rounded-xl border text-sm font-body transition-all"
+                  [class.border-vroom-accent]="newRole() === r"
+                  [class.bg-vroom-accent\10]="newRole() === r"
+            [class.text-vroom-accent]="newRole() === r"
+            [class.border-vroom-border]="newRole() !== r"
+            [class.bg-vroom-surface]="newRole() !== r"
+            [class.text-vroom-text]="newRole() !== r">
+          <span>{{ r | titlecase }}</span>
+          @if (newRole() === r) { <span class="text-vroom-accent">✓</span> }
+          </button>
+        }
+      </div>
+      <div class="flex gap-3">
+        <button (click)="roleTarget.set(null)" class="flex-1 btn-secondary text-sm">Cancel</button>
+        <button (click)="confirmRoleChange()" [disabled]="isChangingRole() || newRole() === roleTarget()?.role"
+                class="flex-1 btn-primary text-sm disabled:opacity-50">
+          {{ isChangingRole() ? 'Saving...' : 'Save' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

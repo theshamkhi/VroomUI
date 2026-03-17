@@ -7,7 +7,7 @@ import { takeUntil } from 'rxjs/operators';
 
 import { ScenarioService } from '../../core/services/scenario.service';
 import { DashboardService } from '../../core/services/dashboard.service';
-import { Scenario, Difficulty, Theme } from '../../shared/models/scenario.model';
+import { Scenario, Difficulty, Theme, Assignment, AssignmentStatus } from '../../shared/models/scenario.model';
 import { Progress, CompletionStatus } from '../../shared/models/progress.model';
 
 type SortOption = 'popular' | 'top-rated' | 'newest' | 'duration-asc' | 'duration-desc';
@@ -50,7 +50,9 @@ export class ScenariosComponent implements OnInit, OnDestroy {
 
   readonly Difficulty = Difficulty;
   readonly Theme = Theme;
+  assignments      = signal<Assignment[]>([]);
   readonly CompletionStatus = CompletionStatus;
+  readonly AssignmentStatus = AssignmentStatus;
 
   difficulties: { value: Difficulty; label: string; color: string; bg: string }[] = [
     { value: Difficulty.BEGINNER, label: 'Beginner', color: 'text-vroom-green', bg: 'bg-vroom-green/10 border-vroom-green/30' },
@@ -134,6 +136,10 @@ export class ScenariosComponent implements OnInit, OnDestroy {
     };
   });
 
+  assignedScenarioIds = computed(() =>
+    new Set(this.assignments().map(a => a.scenarioId))
+  );
+
   ngOnInit(): void {
     // Debounced search
     this.searchSubject.pipe(
@@ -159,10 +165,12 @@ export class ScenariosComponent implements OnInit, OnDestroy {
     forkJoin({
       scenarios: this.scenarioService.getAll().pipe(catchError(() => of([]))),
       progress: this.dashboardService.getMyProgress().pipe(catchError(() => of([]))),
+      assignments: this.dashboardService.getMyAssignments().pipe(catchError(() => of([]))),
     }).subscribe({
-      next: ({ scenarios, progress }) => {
+      next: ({ scenarios, progress, assignments }) => {
         this.allScenarios.set(scenarios);
         this.myProgress.set(progress);
+        this.assignments.set(assignments ?? []);
         this.isLoading.set(false);
       },
       error: () => {

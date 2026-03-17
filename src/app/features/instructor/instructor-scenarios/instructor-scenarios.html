@@ -1,0 +1,417 @@
+<div class="min-h-full bg-vroom-black">
+
+  <!-- ══ HEADER ══ -->
+  <div class="border-b border-vroom-border bg-vroom-dark px-6 lg:px-8 py-5">
+    <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-display font-bold text-vroom-text">My Scenarios</h1>
+        @if (!isLoading()) {
+          <p class="text-vroom-text-dim font-body text-sm mt-0.5">{{ counts().all }} total</p>
+        }
+      </div>
+      <a routerLink="/instructor/scenarios/new" class="btn-primary inline-flex items-center gap-2 text-sm flex-shrink-0">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
+        New Scenario
+      </a>
+    </div>
+  </div>
+
+  <div class="max-w-7xl mx-auto px-6 lg:px-8 py-6 space-y-5">
+
+    <!-- ══ ERROR ══ -->
+    @if (hasError()) {
+      <div class="flex flex-col items-center justify-center py-24 text-center">
+        <div class="text-5xl mb-4">⚠️</div>
+        <h2 class="font-display font-bold text-xl text-vroom-text mb-2">Couldn't load scenarios</h2>
+        <button (click)="load()" class="btn-primary mt-4 text-sm">Retry</button>
+      </div>
+    }
+
+    @else {
+
+      <!-- ══ TOOLBAR ══ -->
+      <div class="flex flex-col sm:flex-row gap-3">
+
+        <!-- Search -->
+        <div class="relative flex-1">
+          <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-vroom-muted pointer-events-none"
+               fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+          <input
+            type="text"
+            placeholder="Search scenarios…"
+            [value]="searchQuery()"
+            (input)="searchQuery.set($any($event.target).value)"
+            class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-vroom-surface border border-vroom-border text-sm font-body text-vroom-text placeholder-vroom-muted focus:outline-none focus:border-vroom-accent/50 transition-colors"/>
+        </div>
+
+        <!-- Status filter pills -->
+        <div class="flex gap-2 flex-wrap">
+          @for (tab of [
+            { value: 'ALL',       label: 'All',      count: counts().all },
+            { value: 'PUBLISHED', label: 'Published', count: counts().published },
+            { value: 'DRAFT',     label: 'Draft',    count: counts().draft },
+            { value: 'ARCHIVED',  label: 'Archived', count: counts().archived }
+          ]; track tab.value) {
+            <button (click)="setStatusFilter(tab.value)"
+                    class="px-3 py-2 rounded-xl border text-xs font-body transition-all"
+                    [class.bg-vroom-accent]="statusFilter() === tab.value"
+                    [class.border-vroom-accent]="statusFilter() === tab.value"
+                    [class.text-white]="statusFilter() === tab.value"
+                    [class.bg-vroom-surface]="statusFilter() !== tab.value"
+                    [class.border-vroom-border]="statusFilter() !== tab.value"
+                    [class.text-vroom-text-dim]="statusFilter() !== tab.value">
+              {{ tab.label }}
+              <span class="ml-1.5 font-mono">{{ tab.count }}</span>
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- ══ LOADING ══ -->
+      @if (isLoading()) {
+        <div class="card rounded-2xl overflow-hidden">
+          <div class="hidden lg:grid grid-cols-12 gap-4 px-6 py-3 border-b border-vroom-border bg-vroom-surface/50">
+            <div class="col-span-5 h-3 bg-vroom-surface rounded-full w-16"></div>
+          </div>
+          <div class="divide-y divide-vroom-border">
+            @for (s of skeletons; track $index) {
+              <div class="flex items-center gap-4 px-6 py-4 animate-pulse">
+                <div class="w-9 h-9 rounded-xl bg-vroom-surface flex-shrink-0"></div>
+                <div class="flex-1 space-y-2">
+                  <div class="h-3.5 bg-vroom-surface rounded-full w-1/3"></div>
+                  <div class="h-2.5 bg-vroom-surface rounded-full w-1/5"></div>
+                </div>
+                <div class="h-6 w-20 bg-vroom-surface rounded-lg"></div>
+                <div class="h-6 w-12 bg-vroom-surface rounded-lg"></div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      @else if (scenarios().length === 0) {
+        <div class="flex flex-col items-center justify-center py-28 text-center">
+          <div class="text-5xl mb-4">🎬</div>
+          <h2 class="font-display font-bold text-xl text-vroom-text mb-2">No scenarios yet</h2>
+          <p class="text-vroom-text-dim font-body text-sm mb-6 max-w-xs">Create your first scenario — add a video, pin questions to timestamps, and publish.</p>
+          <a routerLink="/instructor/scenarios/new" class="btn-primary inline-flex items-center gap-2 text-sm">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            Create First Scenario
+          </a>
+        </div>
+      }
+
+      @else if (filtered().length === 0) {
+        <div class="card rounded-2xl py-16 text-center">
+          <p class="text-vroom-muted font-body text-sm">No scenarios match your search.</p>
+          <button (click)="searchQuery.set(''); setStatusFilter('ALL')"
+                  class="mt-3 text-xs font-body text-vroom-accent hover:underline">Clear filters</button>
+        </div>
+      }
+
+      @else {
+        <div class="card rounded-2xl overflow-hidden">
+
+          <!-- Table header -->
+          <div class="hidden lg:grid grid-cols-12 gap-4 px-6 py-3 border-b border-vroom-border bg-vroom-surface/50 text-xs font-body text-vroom-muted">
+            <button (click)="setSort('title')" class="col-span-4 flex items-center gap-1 hover:text-vroom-text transition-colors text-left">
+              Scenario <span class="font-mono text-vroom-subtle">{{ sortIcon('title') }}</span>
+            </button>
+            <button (click)="setSort('status')" class="col-span-2 flex items-center gap-1 hover:text-vroom-text transition-colors">
+              Status <span class="font-mono text-vroom-subtle">{{ sortIcon('status') }}</span>
+            </button>
+            <button (click)="setSort('difficulty')" class="col-span-1 flex items-center gap-1 hover:text-vroom-text transition-colors">
+              Level <span class="font-mono text-vroom-subtle">{{ sortIcon('difficulty') }}</span>
+            </button>
+            <button (click)="setSort('completions')" class="col-span-2 flex items-center gap-1 hover:text-vroom-text transition-colors">
+              Completions <span class="font-mono text-vroom-subtle">{{ sortIcon('completions') }}</span>
+            </button>
+            <button (click)="setSort('rating')" class="col-span-1 flex items-center gap-1 hover:text-vroom-text transition-colors">
+              Rating <span class="font-mono text-vroom-subtle">{{ sortIcon('rating') }}</span>
+            </button>
+            <button (click)="setSort('updated')" class="col-span-2 flex items-center gap-1 hover:text-vroom-text transition-colors">
+              Updated <span class="font-mono text-vroom-subtle">{{ sortIcon('updated') }}</span>
+            </button>
+          </div>
+
+          <!-- Rows -->
+          <div class="divide-y divide-vroom-border">
+            @for (s of filtered(); track s.id) {
+
+              <!-- Delete confirmation overlay -->
+              @if (confirmDeleteId() === s.id) {
+                <div class="px-6 py-4 bg-red-500/5 border-l-2 border-red-500/40 animate-fade-in animate-fill-both">
+                  <p class="text-sm font-body font-medium text-red-400 mb-1">Delete "{{ s.title }}"?</p>
+                  <p class="text-xs font-body text-vroom-muted mb-4">This is permanent and cannot be undone. All questions and interaction points will be lost.</p>
+                  @if (deleteError()) {
+                    <p class="text-xs font-body text-red-400 mb-3">{{ deleteError() }}</p>
+                  }
+                  <div class="flex gap-3">
+                    <button (click)="confirmDelete()" [disabled]="actionInProgress() === s.id"
+                            class="px-4 py-1.5 rounded-xl bg-red-500/15 border border-red-500/30 text-xs font-body text-red-400 hover:bg-red-500/25 transition-colors disabled:opacity-50 flex items-center gap-2">
+                      @if (actionInProgress() === s.id) {
+                        <svg class="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                        </svg>
+                      }
+                      Yes, delete
+                    </button>
+                    <button (click)="cancelDelete()"
+                            class="px-4 py-1.5 rounded-xl border border-vroom-border text-xs font-body text-vroom-text-dim hover:bg-vroom-surface transition-colors">
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              } @else {
+                <div class="group grid grid-cols-1 lg:grid-cols-12 gap-2 lg:gap-4 px-6 py-4 hover:bg-vroom-surface/30 transition-colors cursor-pointer"
+                     (click)="goToEditor(s.id)">
+
+                  <!-- Scenario name + theme (col-span-4) -->
+                  <div class="col-span-4 flex items-center gap-3 min-w-0">
+                    <div class="w-9 h-9 rounded-xl bg-vroom-surface border border-vroom-border flex items-center justify-center text-base flex-shrink-0 group-hover:border-vroom-accent/30 transition-colors">
+                      {{ themeEmoji(s.theme) }}
+                    </div>
+                    <div class="min-w-0">
+                      <p class="font-body text-sm font-medium text-vroom-text truncate">{{ s.title }}</p>
+                      <p class="text-xs font-body text-vroom-muted truncate">{{ s.description | slice:0:60 }}{{ s.description.length > 60 ? '…' : '' }}</p>
+                    </div>
+                  </div>
+
+                  <!-- Status (col-span-2) -->
+                  <div class="col-span-2 flex items-center">
+                    <span class="text-xs font-body font-medium px-2 py-1 rounded-lg border flex items-center gap-1.5"
+                          [class]="statusBadge(s.status)">
+                      <span class="w-1.5 h-1.5 rounded-full" [class]="statusDot(s.status)"></span>
+                      {{ s.status }}
+                    </span>
+                  </div>
+
+                  <!-- Difficulty (col-span-1) -->
+                  <div class="col-span-1 flex items-center">
+                    <span class="text-xs font-mono font-semibold" [class]="difficultyColor(s.difficulty)">
+                      {{ s.difficulty[0] }}{{ s.difficulty.slice(1).toLowerCase() }}
+                    </span>
+                  </div>
+
+                  <!-- Completions (col-span-2) -->
+                  <div class="col-span-2 flex items-center">
+                    <span class="text-sm font-body tabular-nums text-vroom-text-dim">{{ s.completionCount | number }}</span>
+                  </div>
+
+                  <!-- Rating (col-span-1) -->
+                  <div class="col-span-1 flex items-center gap-1">
+                    @if (s.averageRating > 0) {
+                      <span class="text-vroom-amber text-xs">★</span>
+                      <span class="text-sm font-body tabular-nums text-vroom-text-dim">{{ s.averageRating | number:'1.1-1' }}</span>
+                    } @else {
+                      <span class="text-vroom-muted font-body text-sm">—</span>
+                    }
+                  </div>
+
+                  <!-- Updated + actions (col-span-2) -->
+                  <div class="col-span-2 flex items-center justify-between gap-2">
+                    <span class="text-sm font-body text-vroom-muted">{{ relativeTime(s.updatedAt) }}</span>
+
+                    <!-- Action buttons — appear on row hover -->
+                    <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+
+                      <!-- Edit -->
+                      <button (click)="goToEditor(s.id, $event)"
+                              class="w-7 h-7 rounded-lg bg-vroom-surface border border-vroom-border flex items-center justify-center text-vroom-muted hover:text-vroom-text hover:border-vroom-accent/30 transition-all"
+                              title="Edit">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                        </svg>
+                      </button>
+
+                      <!-- Publish toggle -->
+                      <button (click)="togglePublish(s, $event)"
+                              [disabled]="actionInProgress() === s.id"
+                              class="w-7 h-7 rounded-lg bg-vroom-surface border border-vroom-border flex items-center justify-center transition-all disabled:opacity-40"
+                              [class.text-vroom-amber]="s.status !== ScenarioStatus.PUBLISHED"
+                              [class.hover:border-vroom-green\30]="s.status !== ScenarioStatus.PUBLISHED"
+                      [class.hover:text-vroom-green]="s.status !== ScenarioStatus.PUBLISHED"
+                      [class.text-vroom-green]="s.status === ScenarioStatus.PUBLISHED"
+                      [class.hover:border-red-500\30]="s.status === ScenarioStatus.PUBLISHED"
+                      [class.hover:text-red-400]="s.status === ScenarioStatus.PUBLISHED"
+                      [title]="s.status === ScenarioStatus.PUBLISHED ? 'Unpublish' : 'Publish'">
+                      @if (actionInProgress() === s.id) {
+                        <svg class="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                        </svg>
+                      } @else if (s.status === ScenarioStatus.PUBLISHED) {
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+                        </svg>
+                      } @else {
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                      }
+                      </button>
+
+                      <!-- Assign -->
+                      <button (click)="openAssignModal(s, $event)"
+                              class="w-7 h-7 rounded-lg bg-vroom-surface border border-vroom-border flex items-center justify-center text-vroom-muted hover:text-vroom-accent hover:border-vroom-accent/30 transition-all"
+                              title="Assign to student">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                      </button>
+
+                      <!-- Delete -->
+                      <button (click)="promptDelete(s.id, $event)"
+                              class="w-7 h-7 rounded-lg bg-vroom-surface border border-vroom-border flex items-center justify-center text-vroom-muted hover:text-red-400 hover:border-red-500/30 transition-all"
+                              title="Delete">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              }
+            }
+          </div>
+        </div>
+      }
+
+    }
+  </div>
+</div>
+
+<!-- ══ ASSIGN SCENARIO MODAL ══ -->
+@if (showAssignModal() && assignScenario()) {
+  @let scenario = assignScenario()!;
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4" (click)="closeAssignModal()">
+    <div class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
+
+    <div class="relative z-10 w-full max-w-md bg-vroom-dark border border-vroom-border rounded-2xl overflow-hidden shadow-2xl animate-fade-in animate-fill-both"
+         (click)="$event.stopPropagation()">
+
+      <!-- Header -->
+      <div class="flex items-center justify-between px-5 py-4 border-b border-vroom-border">
+        <div>
+          <p class="font-body text-sm font-semibold text-vroom-text">Assign to Student</p>
+          <p class="text-xs font-body text-vroom-muted truncate max-w-xs">{{ scenario.title }}</p>
+        </div>
+        <button (click)="closeAssignModal()" class="w-8 h-8 rounded-xl bg-vroom-surface border border-vroom-border flex items-center justify-center text-vroom-muted hover:text-vroom-text transition-all">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Success state -->
+      @if (assignSuccess()) {
+        <div class="flex flex-col items-center justify-center py-12 px-5 text-center">
+          <div class="w-12 h-12 rounded-full bg-green-500/10 border border-green-500/25 flex items-center justify-center mb-3">
+            <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+          </div>
+          <p class="font-body font-semibold text-vroom-text text-sm mb-1">Scenario Assigned!</p>
+          <p class="text-xs font-body text-vroom-muted">The student will see it in their dashboard.</p>
+        </div>
+      } @else {
+        <div class="p-5 space-y-4">
+
+          <!-- Student search -->
+          <div>
+            <label class="block text-xs font-body text-vroom-muted mb-1.5">Student <span class="text-vroom-accent">*</span></label>
+            <div class="relative mb-2">
+              <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-vroom-muted pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+              </svg>
+              <input type="text" placeholder="Search students…"
+                     [value]="studentSearch()" (input)="studentSearch.set($any($event.target).value)"
+                     class="w-full pl-9 pr-3 py-2 rounded-xl bg-vroom-surface border border-vroom-border text-xs font-body text-vroom-text placeholder-vroom-muted focus:outline-none focus:border-vroom-accent/50 transition-colors"/>
+            </div>
+
+            @if (students().length === 0) {
+              <div class="rounded-xl bg-vroom-surface border border-vroom-border px-4 py-4 text-center">
+                <p class="text-xs font-body text-vroom-muted">No students enrolled yet.</p>
+              </div>
+            } @else {
+              <div class="max-h-44 overflow-y-auto rounded-xl border border-vroom-border divide-y divide-vroom-border">
+                @for (st of filteredStudents(); track st.id) {
+                  <button (click)="selectedStudentId.set(st.id)"
+                          class="w-full text-left px-3 py-2.5 flex items-center gap-2.5 transition-colors hover:bg-vroom-surface/50"
+                          [class.bg-vroom-accent\10]="selectedStudentId() === st.id"
+                    [class.border-l-2]="selectedStudentId() === st.id"
+                    [class.border-vroom-accent]="selectedStudentId() === st.id">
+                  <div class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-display font-bold flex-shrink-0" [class]="avatarColor(st.id)">
+                    {{ initials(st) }}
+                  </div>
+                  <div class="min-w-0">
+                    <p class="text-xs font-body text-vroom-text truncate">{{ st.firstName }} {{ st.lastName }}</p>
+                    <p class="text-[10px] font-body text-vroom-muted truncate">{{ st.email }}</p>
+                  </div>
+                  @if (selectedStudentId() === st.id) {
+                    <svg class="w-4 h-4 text-vroom-accent ml-auto flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                  }
+                  </button>
+                } @empty {
+                  <div class="px-3 py-4 text-center">
+                    <p class="text-xs font-body text-vroom-muted">No students match.</p>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+
+          <!-- Due date -->
+          <div>
+            <label class="block text-xs font-body text-vroom-muted mb-1.5">Due date <span class="text-vroom-muted">(optional)</span></label>
+            <input type="date" [value]="assignDueDate()" (input)="assignDueDate.set($any($event.target).value)"
+                   class="w-full px-3 py-2 rounded-xl bg-vroom-surface border border-vroom-border text-xs font-body text-vroom-text focus:outline-none focus:border-vroom-accent/50 transition-colors"/>
+          </div>
+
+          <!-- Note -->
+          <div>
+            <label class="block text-xs font-body text-vroom-muted mb-1.5">Note <span class="text-vroom-muted">(optional)</span></label>
+            <textarea [value]="assignNote()" (input)="assignNote.set($any($event.target).value)"
+                      rows="2" placeholder="E.g. focus on lane discipline…"
+                      class="w-full px-3 py-2 rounded-xl bg-vroom-surface border border-vroom-border text-xs font-body text-vroom-text placeholder-vroom-muted focus:outline-none focus:border-vroom-accent/50 transition-colors resize-none">
+            </textarea>
+          </div>
+
+          @if (assignError()) {
+            <p class="text-xs font-body text-red-400">{{ assignError() }}</p>
+          }
+
+          <!-- Actions -->
+          <div class="flex gap-3 pt-1">
+            <button (click)="closeAssignModal()"
+                    class="flex-1 px-4 py-2.5 rounded-xl border border-vroom-border text-xs font-body text-vroom-text-dim hover:bg-vroom-surface transition-colors">
+              Cancel
+            </button>
+            <button (click)="submitAssignment()"
+                    [disabled]="!selectedStudentId() || isAssigning()"
+                    class="flex-1 px-4 py-2.5 rounded-xl bg-vroom-accent text-white text-xs font-body font-semibold hover:bg-vroom-accent/90 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors">
+              @if (isAssigning()) {
+                <svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                </svg>
+                Assigning…
+              } @else {
+                Assign Scenario
+              }
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+}

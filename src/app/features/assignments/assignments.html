@@ -1,0 +1,215 @@
+<div class="min-h-full bg-vroom-black">
+
+  <!-- ══ HEADER ══ -->
+  <div class="border-b border-vroom-border bg-vroom-dark px-6 lg:px-8 py-5">
+    <div class="max-w-3xl mx-auto flex items-center justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-display font-bold text-vroom-text">My Assignments</h1>
+        @if (!isLoading()) {
+          <p class="text-vroom-text-dim font-body text-sm mt-0.5">
+            <span class="font-body font-bold tabular-nums">{{ counts().all }}</span> total ·
+            @if (counts().overdue > 0) {
+              <span class="text-red-400 font-body font-bold tabular-nums">{{ counts().overdue }} overdue</span>
+            } @else {
+              <span class="text-vroom-muted">none overdue</span>
+            }
+          </p>
+        }
+      </div>
+    </div>
+  </div>
+
+  <div class="max-w-3xl mx-auto px-6 lg:px-8 py-6 space-y-5">
+
+    <!-- ══ ERROR ══ -->
+    @if (hasError()) {
+      <div class="flex flex-col items-center justify-center py-24 text-center">
+        <div class="text-5xl mb-4">⚠️</div>
+        <h2 class="font-display font-bold text-xl text-vroom-text mb-2">Couldn't load assignments</h2>
+        <button (click)="load()" class="btn-primary mt-4 text-sm">Retry</button>
+      </div>
+    }
+
+    @else {
+
+      <!-- ══ TABS ══ -->
+      <div class="flex gap-2 flex-wrap">
+        @for (tab of [
+          { value: 'ALL',       label: 'All',       count: counts().all },
+          { value: 'OVERDUE',   label: 'Overdue',   count: counts().overdue },
+          { value: 'PENDING',   label: 'Pending',   count: counts().pending },
+          { value: 'COMPLETED', label: 'Completed', count: counts().completed }
+        ]; track tab.value) {
+          <button (click)="setTab(tab.value)"
+                  class="px-3 py-2 rounded-xl border text-xs font-body transition-all flex items-center gap-1.5"
+                  [class.bg-vroom-accent]="activeTab() === tab.value"
+                  [class.border-vroom-accent]="activeTab() === tab.value"
+                  [class.text-white]="activeTab() === tab.value"
+                  [class.bg-vroom-surface]="activeTab() !== tab.value"
+                  [class.border-vroom-border]="activeTab() !== tab.value"
+                  [class.text-vroom-text-dim]="activeTab() !== tab.value">
+            @if (tab.value === 'OVERDUE' && counts().overdue > 0) {
+              <span class="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse"></span>
+            }
+            {{ tab.label }}
+            <span class="font-body font-bold tabular-nums">{{ tab.count }}</span>
+          </button>
+        }
+      </div>
+
+      @if (isLoading()) {
+        <!-- ══ LOADING ══ -->
+        <div class="space-y-3">
+          @for (s of skeletons; track $index) {
+            <div class="card rounded-2xl p-5 animate-pulse flex items-center gap-4">
+              <div class="w-10 h-10 rounded-xl bg-vroom-surface flex-shrink-0"></div>
+              <div class="flex-1 space-y-2">
+                <div class="h-3.5 bg-vroom-surface rounded-full w-1/3"></div>
+                <div class="h-2.5 bg-vroom-surface rounded-full w-1/2"></div>
+              </div>
+              <div class="h-6 w-20 bg-vroom-surface rounded-lg"></div>
+            </div>
+          }
+        </div>
+      }
+
+      @else if (assignments().length === 0) {
+        <!-- ══ EMPTY ══ -->
+        <div class="flex flex-col items-center justify-center py-28 text-center">
+          <div class="text-5xl mb-4">📋</div>
+          <h2 class="font-display font-bold text-xl text-vroom-text mb-2">No assignments yet</h2>
+          <p class="text-vroom-text-dim font-body text-sm max-w-xs">Your instructor will assign scenarios here when they want you to complete specific ones.</p>
+          <a routerLink="/scenarios" class="btn-primary mt-6 text-sm inline-flex items-center gap-2">
+            Browse Scenarios
+          </a>
+        </div>
+      }
+
+      @else if (filtered().length === 0) {
+        <!-- ══ NO FILTERED RESULTS ══ -->
+        <div class="card rounded-2xl py-16 text-center">
+          <p class="text-vroom-muted font-body text-sm">No {{ activeTab().toLowerCase() }} assignments.</p>
+          <button (click)="setTab('ALL')" class="mt-3 text-xs font-body text-vroom-accent hover:underline">Show all</button>
+        </div>
+      }
+
+      @else {
+        <!-- ══ ASSIGNMENT CARDS ══ -->
+        <div class="space-y-3">
+          @for (a of filtered(); track a.id) {
+            <div class="card rounded-2xl overflow-hidden border"
+                 [class.border-red-500\20]="a.status === AssignmentStatus.OVERDUE"
+              [class.border-vroom-border]="a.status !== AssignmentStatus.OVERDUE">
+
+            <div class="flex items-start gap-4 p-5">
+
+              <!-- Status icon -->
+              <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 border"
+                   [class.bg-red-500\10]="a.status === AssignmentStatus.OVERDUE"
+              [class.border-red-500\25]="a.status === AssignmentStatus.OVERDUE"
+              [class.bg-amber-500\10]="a.status === AssignmentStatus.PENDING"
+              [class.border-amber-500\25]="a.status === AssignmentStatus.PENDING"
+              [class.bg-green-500\10]="a.status === AssignmentStatus.COMPLETED"
+              [class.border-green-500\25]="a.status === AssignmentStatus.COMPLETED">
+              @if (a.status === AssignmentStatus.OVERDUE) {
+                <svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                </svg>
+              } @else if (a.status === AssignmentStatus.COMPLETED) {
+                <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+              } @else {
+                <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                </svg>
+              }
+            </div>
+
+            <!-- Content -->
+            <div class="flex-1 min-w-0">
+              <div class="flex items-start justify-between gap-3 flex-wrap mb-1.5">
+                <h3 class="font-body font-semibold text-vroom-text text-sm">{{ a.scenarioTitle }}</h3>
+                <span class="text-xs font-body font-medium px-2 py-0.5 rounded-lg border inline-flex items-center gap-1.5 flex-shrink-0" [class]="statusBadge(a.status)">
+                      <span class="w-1.5 h-1.5 rounded-full" [class]="statusDot(a.status)"></span>
+                  {{ statusLabel(a.status) }}
+                    </span>
+              </div>
+
+              <!-- Meta -->
+              <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-body text-vroom-muted">
+                <span>Assigned {{ relativeTime(a.assignedAt) }}</span>
+
+                @if (a.dueDate) {
+                  <span class="text-vroom-border">·</span>
+                  @let days = daysUntilDue(a.dueDate);
+                  @if (a.status === AssignmentStatus.OVERDUE) {
+                    <span class="text-red-400 font-semibold">
+                          Due {{ formatDate(a.dueDate) }} · {{ days !== null ? (-days) + 'd overdue' : '' }}
+                        </span>
+                  } @else if (days !== null && days <= 3 && a.status === AssignmentStatus.PENDING) {
+                    <span class="text-amber-400 font-semibold">Due {{ formatDate(a.dueDate) }} · {{ days }}d left</span>
+                  } @else {
+                    <span>Due {{ formatDate(a.dueDate) }}</span>
+                  }
+                }
+
+                @if (a.completedAt) {
+                  <span class="text-vroom-border">·</span>
+                  <span class="text-green-400">Completed {{ relativeTime(a.completedAt) }}</span>
+                }
+              </div>
+
+              @if (a.note) {
+                <p class="text-xs font-body text-vroom-muted italic mt-2 bg-vroom-surface/50 rounded-lg px-3 py-1.5 border border-vroom-border">
+                  💬 {{ a.note }}
+                </p>
+              }
+            </div>
+            </div>
+
+            <!-- CTA footer -->
+            @if (a.status !== AssignmentStatus.COMPLETED) {
+              <div class="border-t border-vroom-border px-5 py-3 flex items-center justify-between bg-vroom-surface/30">
+                <p class="text-xs font-body text-vroom-muted">
+                  @if (a.status === AssignmentStatus.OVERDUE) {
+                    Complete this scenario as soon as possible.
+                  } @else {
+                    Start when you're ready.
+                  }
+                </p>
+                <a [routerLink]="['/scenarios', a.scenarioId]"
+                   class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-body font-semibold transition-colors"
+                   [class.bg-red-500\15]="a.status === AssignmentStatus.OVERDUE"
+                [class.border]="true"
+                [class.border-red-500\30]="a.status === AssignmentStatus.OVERDUE"
+                [class.text-red-400]="a.status === AssignmentStatus.OVERDUE"
+                [class.hover:bg-red-500\25]="a.status === AssignmentStatus.OVERDUE"
+                [class.bg-vroom-accent]="a.status === AssignmentStatus.PENDING"
+                [class.border-transparent]="a.status === AssignmentStatus.PENDING"
+                [class.text-white]="a.status === AssignmentStatus.PENDING"
+                [class.hover:bg-vroom-accent\90]="a.status === AssignmentStatus.PENDING">
+                Start Scenario
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+                </a>
+              </div>
+            } @else {
+              <div class="border-t border-vroom-border px-5 py-3 flex items-center justify-between bg-vroom-surface/30">
+                <p class="text-xs font-body text-green-400">✓ Well done on completing this scenario!</p>
+                <a [routerLink]="['/scenarios', a.scenarioId]"
+                   class="text-xs font-body text-vroom-muted hover:text-vroom-text transition-colors">
+                  View again →
+                </a>
+              </div>
+            }
+
+            </div>
+          }
+        </div>
+      }
+
+    }
+  </div>
+</div>

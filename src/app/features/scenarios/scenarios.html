@@ -180,8 +180,8 @@
         </button>
       </div>
     }
+
     @else if (isLoading()) {
-      <!-- ─── LOADING SKELETONS ─── -->
       <div [class]="viewMode() === 'grid'
         ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'
         : 'space-y-3'">
@@ -215,7 +215,6 @@
     }
 
     @else if (filteredScenarios().length === 0) {
-      <!-- ─── EMPTY STATE ─── -->
       <div class="flex flex-col items-center justify-center py-24 text-center">
         <div class="w-20 h-20 rounded-2xl bg-vroom-surface border border-vroom-border flex items-center justify-center text-4xl mb-5">
           🔍
@@ -231,7 +230,6 @@
     }
 
     @else if (viewMode() === 'grid') {
-      <!-- ─── GRID VIEW ─── -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         @for (scenario of filteredScenarios(); track scenario.id) {
           @let prog = progressFor(scenario.id);
@@ -298,6 +296,15 @@
                 {{ scenario.title }}
               </h3>
 
+              @if (assignedScenarioIds().has(scenario.id)) {
+                <div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-vroom-accent/10 border border-vroom-accent/25 mb-2">
+                  <svg class="w-2.5 h-2.5 text-vroom-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                  </svg>
+                  <span class="text-[10px] font-body font-semibold text-vroom-accent">Assigned</span>
+                </div>
+              }
+
               <!-- Meta row -->
               <div class="flex items-center gap-3 text-xs text-vroom-muted font-body mt-auto pt-3 border-t border-vroom-border">
                 <span class="flex items-center gap-1">
@@ -325,7 +332,6 @@
     }
 
     @else {
-      <!-- ─── LIST VIEW ─── -->
       <div class="space-y-2">
         @for (scenario of filteredScenarios(); track scenario.id) {
           @let prog = progressFor(scenario.id);
@@ -350,7 +356,14 @@
                   </span>
                 }
               </div>
-              <div class="font-body font-medium text-sm text-vroom-text truncate">{{ scenario.title }}</div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <div class="font-body font-medium text-sm text-vroom-text truncate">{{ scenario.title }}</div>
+                @if (assignedScenarioIds().has(scenario.id)) {
+                  <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-vroom-accent/10 border border-vroom-accent/25 flex-shrink-0">
+                    <span class="text-[10px] font-body font-semibold text-vroom-accent">Assigned</span>
+                  </span>
+                }
+              </div>
             </div>
 
             <!-- Stats (hidden on mobile) -->

@@ -1,0 +1,324 @@
+<div class="min-h-full bg-vroom-black">
+
+  <!-- ══ HEADER ══ -->
+  <div class="border-b border-vroom-border bg-vroom-dark px-6 lg:px-8 py-5">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-display font-bold text-vroom-text">Analytics</h1>
+        @if (!isLoading()) {
+          <p class="text-vroom-text-dim font-body text-sm mt-0.5">
+            <span class="font-body font-bold tabular-nums">{{ kpis().totalStudents }}</span> students ·
+            <span class="font-body font-bold tabular-nums">{{ kpis().totalScenarios }}</span> scenarios ·
+            <span class="font-body font-bold tabular-nums">{{ filteredProgress().length }}</span> progress records
+          </p>
+        }
+      </div>
+      <!-- Period selector -->
+      <div class="flex items-center gap-1 p-1 rounded-xl bg-vroom-surface border border-vroom-border self-start sm:self-auto">
+        @for (p of [
+          { value: '7d',  label: '7 days' },
+          { value: '30d', label: '30 days' },
+          { value: '90d', label: '90 days' },
+          { value: 'all', label: 'All time' }
+        ]; track p.value) {
+          <button (click)="setPeriod(p.value)"
+                  class="px-3 py-1.5 rounded-lg text-xs font-body transition-all"
+                  [class.bg-vroom-card]="period() === p.value"
+                  [class.text-vroom-text]="period() === p.value"
+                  [class.font-semibold]="period() === p.value"
+                  [class.text-vroom-muted]="period() !== p.value">
+            {{ p.label }}
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+
+  <div class="max-w-7xl mx-auto px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- ══ ERROR ══ -->
+    @if (hasError()) {
+      <div class="flex flex-col items-center justify-center py-24 text-center">
+        <div class="text-5xl mb-4">⚠️</div>
+        <h2 class="font-display font-bold text-xl text-vroom-text mb-2">Couldn't load analytics</h2>
+        <button (click)="load()" class="btn-primary mt-4 text-sm">Retry</button>
+      </div>
+    }
+
+    @else if (isLoading()) {
+      <!-- Skeletons -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        @for (s of skeletons; track $index) {
+          <div class="card rounded-2xl p-5 animate-pulse space-y-3">
+            <div class="h-3 bg-vroom-surface rounded-full w-2/3"></div>
+            <div class="h-8 bg-vroom-surface rounded-full w-1/2"></div>
+          </div>
+        }
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 card rounded-2xl p-6 animate-pulse h-40"></div>
+        <div class="card rounded-2xl p-6 animate-pulse h-40"></div>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        <div class="lg:col-span-2 card rounded-2xl p-6 animate-pulse h-48"></div>
+        <div class="lg:col-span-3 card rounded-2xl p-6 animate-pulse h-48"></div>
+      </div>
+    }
+
+    @else {
+
+      <!-- ══ KPI CARDS ══ -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+
+        <div class="card rounded-2xl p-5 flex flex-col gap-1">
+          <p class="text-xs font-body text-vroom-muted">Total Attempts</p>
+          <p class="text-3xl font-body font-bold tabular-nums text-vroom-text leading-none">{{ kpis().totalAttempts | number }}</p>
+          <p class="text-[10px] font-body text-vroom-muted mt-1">in selected period</p>
+        </div>
+
+        <div class="card rounded-2xl p-5 flex flex-col gap-1">
+          <p class="text-xs font-body text-vroom-muted">Avg Score</p>
+          <p class="text-3xl font-body font-bold tabular-nums leading-none" [class]="scoreColor(kpis().avgScore)">{{ kpis().avgScore }}%</p>
+          <p class="text-[10px] font-body text-vroom-muted mt-1">across all scenarios</p>
+        </div>
+
+        <div class="card rounded-2xl p-5 flex flex-col gap-1">
+          <p class="text-xs font-body text-vroom-muted">Pass Rate</p>
+          <p class="text-3xl font-body font-bold tabular-nums leading-none" [class]="passRateColor(kpis().passRate)">{{ kpis().passRate }}%</p>
+          <p class="text-[10px] font-body text-vroom-muted mt-1">of completed attempts</p>
+        </div>
+
+        <div class="card rounded-2xl p-5 flex flex-col gap-1">
+          <p class="text-xs font-body text-vroom-muted">Time Spent</p>
+          <p class="text-3xl font-body font-bold tabular-nums text-vroom-text leading-none">{{ kpis().totalTimeHrs | number }}h</p>
+          <p class="text-[10px] font-body text-vroom-muted mt-1">total learning time</p>
+        </div>
+
+      </div>
+
+      <!-- ══ ACTIVITY + ASSIGNMENTS ROW ══ -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- Activity chart (2/3) -->
+        <div class="lg:col-span-2 card rounded-2xl p-6">
+          <div class="flex items-center justify-between mb-5">
+            <div>
+              <h2 class="font-display font-semibold text-vroom-text text-base">Activity</h2>
+              <p class="text-xs font-body text-vroom-muted mt-0.5">Daily student attempts</p>
+            </div>
+            @if (kpis().totalAttempts > 0) {
+              <div class="text-right">
+                <p class="font-body font-bold tabular-nums text-vroom-accent text-xl leading-none">{{ kpis().totalAttempts | number }}</p>
+                <p class="text-[10px] font-body text-vroom-muted">total attempts</p>
+              </div>
+            }
+          </div>
+          @if (filteredProgress().length === 0) {
+            <div class="flex items-center justify-center h-20 text-center">
+              <p class="text-vroom-muted font-body text-sm">No activity in this period.</p>
+            </div>
+          } @else {
+            <div class="flex items-end gap-0.5 h-20">
+              @for (bar of activityBars(); track bar.index) {
+                <div class="flex-1 flex flex-col justify-end group relative" [title]="bar.value + ' attempts'">
+                  <div class="rounded-sm transition-all duration-300 group-hover:bg-vroom-accent"
+                       [style.height.%]="bar.pct || 2"
+                       [class.bg-vroom-accent]="bar.value > 0"
+                       [class.bg-vroom-surface]="bar.value === 0"
+                       style="min-height:2px"></div>
+                </div>
+              }
+            </div>
+            <div class="flex justify-between mt-2">
+              <span class="text-[10px] font-body text-vroom-muted">
+                {{ period() === '7d' ? '7d ago' : period() === '30d' ? '30d ago' : period() === '90d' ? '90d ago' : 'Start' }}
+              </span>
+              <span class="text-[10px] font-body text-vroom-muted">Today</span>
+            </div>
+          }
+        </div>
+
+        <!-- Assignments summary (1/3) -->
+        <div class="card rounded-2xl p-6">
+          <h2 class="font-display font-semibold text-vroom-text text-base mb-1">Assignments</h2>
+          <p class="text-xs font-body text-vroom-muted mb-5">All time status overview</p>
+          @if (assignments().length === 0) {
+            <div class="flex items-center justify-center h-20 text-center">
+              <p class="text-xs font-body text-vroom-muted">No assignments created yet.</p>
+            </div>
+          } @else {
+            <div class="space-y-3">
+              @for (item of [
+                { label: 'Completed', count: assignmentCounts().completed, color: 'text-green-400', bar: 'bg-green-400' },
+                { label: 'Pending',   count: assignmentCounts().pending,   color: 'text-amber-400', bar: 'bg-amber-400' },
+                { label: 'Overdue',   count: assignmentCounts().overdue,   color: 'text-red-400',   bar: 'bg-red-400' }
+              ]; track item.label) {
+                <div>
+                  <div class="flex items-center justify-between mb-1">
+                    <span class="text-xs font-body text-vroom-muted">{{ item.label }}</span>
+                    <span class="text-xs font-body font-bold tabular-nums" [class]="item.color">{{ item.count }}</span>
+                  </div>
+                  <div class="h-1.5 bg-vroom-surface rounded-full overflow-hidden">
+                    <div class="h-full rounded-full transition-all duration-700" [class]="item.bar"
+                         [style.width.%]="assignments().length ? (item.count / assignments().length) * 100 : 0"></div>
+                  </div>
+                </div>
+              }
+              <p class="text-[10px] font-body text-vroom-muted pt-1">
+                <span class="font-bold tabular-nums text-vroom-text-dim">{{ assignments().length }}</span> total assignments
+              </p>
+            </div>
+          }
+        </div>
+
+      </div>
+
+      <!-- ══ DIFFICULTY + SCENARIO TABLE ══ -->
+      <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+
+        <!-- Difficulty breakdown -->
+        <div class="lg:col-span-2 card rounded-2xl p-6">
+          <h2 class="font-display font-semibold text-vroom-text text-base mb-1">By Difficulty</h2>
+          <p class="text-xs font-body text-vroom-muted mb-5">Pass rate per level</p>
+          <div class="space-y-5">
+            @for (d of difficultyBreakdown(); track d.difficulty) {
+              <div>
+                <div class="flex items-center justify-between mb-2">
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs font-body font-semibold" [class]="difficultyColor(d.difficulty)">
+                      {{ d.difficulty[0] }}{{ d.difficulty.slice(1).toLowerCase() }}
+                    </span>
+                    <span class="text-[10px] font-body text-vroom-muted">
+                      {{ d.count }} scenario{{ d.count !== 1 ? 's' : '' }} · {{ d.attempts | number }} attempts
+                    </span>
+                  </div>
+                  <div class="flex items-center gap-3 text-xs font-body tabular-nums">
+                    <span [class]="passRateColor(d.passRate)">{{ d.passRate }}% pass</span>
+                    <span class="text-vroom-muted">{{ d.avgScore }}% avg</span>
+                  </div>
+                </div>
+                <div class="h-1.5 bg-vroom-surface rounded-full overflow-hidden">
+                  <div class="h-full rounded-full transition-all duration-700" [style.width.%]="d.passRate" [class]="difficultyBarColor(d.difficulty)"></div>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Scenario performance table -->
+        <div class="lg:col-span-3 card rounded-2xl p-6">
+          <h2 class="font-display font-semibold text-vroom-text text-base mb-1">Scenario Performance</h2>
+          <p class="text-xs font-body text-vroom-muted mb-5">Ranked by attempts in selected period</p>
+          @if (scenarioStats().length === 0) {
+            <div class="flex items-center justify-center h-24 text-center">
+              <p class="text-vroom-muted font-body text-sm">No scenarios yet.</p>
+            </div>
+          } @else {
+            <div class="grid grid-cols-12 gap-2 px-2 mb-2 text-[10px] font-body text-vroom-muted uppercase tracking-wider">
+              <div class="col-span-5">Scenario</div>
+              <div class="col-span-2 text-right">Attempts</div>
+              <div class="col-span-2 text-right">Pass %</div>
+              <div class="col-span-3 text-right">Avg Score</div>
+            </div>
+            <div class="space-y-1">
+              @for (stat of scenarioStats(); track stat.scenario.id; let i = $index) {
+                <div class="grid grid-cols-12 gap-2 px-2 py-2.5 rounded-xl hover:bg-vroom-surface/50 transition-colors">
+                  <div class="col-span-5 flex items-center gap-2 min-w-0">
+                    <span class="text-xs font-body font-bold tabular-nums text-vroom-muted w-4 flex-shrink-0">{{ i + 1 }}</span>
+                    <div class="min-w-0">
+                      <p class="text-xs font-body text-vroom-text truncate">{{ stat.scenario.title }}</p>
+                      <p class="text-[10px] font-body leading-none mt-0.5" [class]="difficultyColor(stat.scenario.difficulty)">
+                        {{ stat.scenario.difficulty[0] }}{{ stat.scenario.difficulty.slice(1).toLowerCase() }}
+                      </p>
+                    </div>
+                  </div>
+                  <div class="col-span-2 flex items-center justify-end">
+                    <span class="text-xs font-body font-bold tabular-nums text-vroom-text-dim">{{ stat.attempts | number }}</span>
+                  </div>
+                  <div class="col-span-2 flex items-center justify-end">
+                    @if (stat.completions > 0) {
+                      <span class="text-xs font-body font-bold tabular-nums" [class]="passRateColor(stat.passRate)">{{ stat.passRate }}%</span>
+                    } @else {
+                      <span class="text-xs font-body text-vroom-muted">—</span>
+                    }
+                  </div>
+                  <div class="col-span-3 flex items-center justify-end gap-2">
+                    @if (stat.attempts > 0) {
+                      <div class="flex-1 h-1 bg-vroom-surface rounded-full overflow-hidden hidden sm:block">
+                        <div class="h-full rounded-full transition-all duration-500" [style.width.%]="stat.avgScore" [class]="passRateBarColor(stat.avgScore)"></div>
+                      </div>
+                      <span class="text-xs font-body font-bold tabular-nums flex-shrink-0" [class]="scoreColor(stat.avgScore)">{{ stat.avgScore }}%</span>
+                    } @else {
+                      <span class="text-xs font-body text-vroom-muted">—</span>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+      </div>
+
+      <!-- ══ TOP STUDENTS ══ -->
+      @if (topStudents().length > 0) {
+        <div class="card rounded-2xl p-6">
+          <h2 class="font-display font-semibold text-vroom-text text-base mb-1">Top Students</h2>
+          <p class="text-xs font-body text-vroom-muted mb-5">Ranked by points earned in selected period</p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+            @for (item of topStudents(); track item.student.id; let i = $index) {
+              <div class="bg-vroom-surface rounded-xl p-4 border border-vroom-border flex flex-col gap-3">
+                <div class="flex items-center gap-2.5">
+                  <div class="relative">
+                    <div class="w-9 h-9 rounded-full flex items-center justify-center text-xs font-display font-bold flex-shrink-0" [class]="avatarColor(item.student.id)">
+                      {{ initials(item.student) }}
+                    </div>
+                    @if (i === 0) {
+                      <span class="absolute -top-1 -right-1 text-xs">🥇</span>
+                    } @else if (i === 1) {
+                      <span class="absolute -top-1 -right-1 text-xs">🥈</span>
+                    } @else if (i === 2) {
+                      <span class="absolute -top-1 -right-1 text-xs">🥉</span>
+                    }
+                  </div>
+                  <div class="min-w-0">
+                    <p class="text-xs font-body font-medium text-vroom-text truncate">{{ item.student.firstName }} {{ item.student.lastName }}</p>
+                    <p class="text-[10px] font-body text-vroom-muted">{{ item.passed }} passed</p>
+                  </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2 text-center">
+                  <div class="bg-vroom-black/30 rounded-lg py-1.5">
+                    <p class="font-body font-bold tabular-nums text-vroom-accent text-sm leading-none">{{ item.points | number }}</p>
+                    <p class="text-[9px] font-body text-vroom-muted mt-0.5">pts</p>
+                  </div>
+                  <div class="bg-vroom-black/30 rounded-lg py-1.5">
+                    <p class="font-body font-bold tabular-nums text-sm leading-none" [class]="scoreColor(item.avgScore)">{{ item.avgScore }}%</p>
+                    <p class="text-[9px] font-body text-vroom-muted mt-0.5">avg</p>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Empty state -->
+      @if (scenarios().length === 0 && students().length === 0) {
+        <div class="flex flex-col items-center justify-center py-20 text-center">
+          <div class="text-5xl mb-4">📊</div>
+          <h2 class="font-display font-bold text-xl text-vroom-text mb-2">No data yet</h2>
+          <p class="text-vroom-text-dim font-body text-sm mb-6 max-w-xs">
+            Create scenarios and assign them to students to start seeing analytics.
+          </p>
+          <a routerLink="/instructor/scenarios/new" class="btn-primary text-sm inline-flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            Create First Scenario
+          </a>
+        </div>
+      }
+
+    }
+  </div>
+</div>
