@@ -17,22 +17,23 @@
       <div class="lg:w-64 flex-shrink-0 space-y-4">
 
         <!-- Profile card -->
-        <div class="card rounded-2xl p-5 text-center">
+        <div class="card rounded-2xl p-6 text-center group relative overflow-hidden">
+          <div class="absolute inset-0 bg-gradient-to-b from-vroom-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
           <!-- Avatar -->
-          <div class="relative inline-block mb-3">
+          <div class="relative inline-block mb-4">
             @if (user()?.profilePicture) {
               <img [src]="user()!.profilePicture" [alt]="fullName()"
-                   class="w-20 h-20 rounded-2xl object-cover ring-2 ring-vroom-border"/>
+                   class="w-24 h-24 rounded-2xl object-cover ring-2 ring-vroom-border group-hover:ring-vroom-accent/30 transition-all duration-300 shadow-accent"/>
             } @else {
-              <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-vroom-accent/20 to-vroom-accent/5 border border-vroom-accent/20 flex items-center justify-center">
-                <span class="text-2xl font-display font-bold text-vroom-accent">{{ initials() }}</span>
+              <div class="w-24 h-24 rounded-2xl bg-gradient-to-br from-vroom-accent/20 to-vroom-accent/5 border border-vroom-accent/20 flex items-center justify-center shadow-inner-glow group-hover:scale-105 transition-transform duration-300">
+                <span class="text-3xl font-display font-black text-vroom-accent drop-shadow-glow">{{ initials() }}</span>
               </div>
             }
             <!-- Verified dot -->
             @if (user()?.emailVerified) {
-              <div class="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-vroom-green border-2 border-vroom-dark flex items-center justify-center"
+              <div class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-vroom-green border-4 border-vroom-dark flex items-center justify-center shadow-lg"
                    title="Email verified">
-                <svg class="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
                   <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                 </svg>
               </div>
@@ -40,15 +41,15 @@
           </div>
 
           @if (isLoadingUser()) {
-            <div class="space-y-2 animate-pulse">
-              <div class="h-4 bg-vroom-surface rounded-full w-3/4 mx-auto"></div>
-              <div class="h-3 bg-vroom-surface rounded-full w-1/2 mx-auto"></div>
+            <div class="space-y-3 animate-pulse">
+              <div class="h-5 bg-vroom-surface rounded-full w-3/4 mx-auto"></div>
+              <div class="h-4 bg-vroom-surface rounded-full w-1/2 mx-auto"></div>
             </div>
           } @else {
-            <h3 class="font-display font-semibold text-vroom-text text-base leading-tight">{{ fullName() }}</h3>
-            <p class="text-vroom-muted font-body text-xs mt-1 truncate">{{ user()?.email }}</p>
-            <div class="mt-3 flex justify-center">
-              <span class="text-xs font-body font-medium px-2.5 py-1 rounded-lg border" [class]="roleBadge().cls">
+            <h3 class="font-display font-black text-vroom-text text-lg leading-tight tracking-tight">{{ fullName() }}</h3>
+            <p class="text-vroom-muted font-body text-xs mt-1.5 truncate">{{ user()?.email }}</p>
+            <div class="mt-4 flex justify-center">
+              <span class="text-[10px] font-mono font-bold uppercase tracking-widest px-3 py-1 rounded-full border shadow-inner-glow transition-all duration-300" [class]="roleBadge().cls">
                 {{ roleBadge().label }}
               </span>
             </div>
@@ -56,46 +57,55 @@
 
           <!-- Stats strip -->
           @if (progressStats()) {
-            <div class="mt-4 pt-4 border-t border-vroom-border grid grid-cols-3 gap-2 text-center">
-              <div>
-                <div class="text-base num-value text-vroom-text">{{ progressStats()!.total }}</div>
-                <div class="text-xs font-body text-vroom-muted leading-tight">Tried</div>
+            <div class="mt-6 pt-6 border-t border-vroom-border/50 grid grid-cols-3 gap-2 text-center">
+              <div class="group/stat">
+                <div class="text-lg font-display font-black text-vroom-text group-hover/stat:text-vroom-accent transition-colors">{{ progressStats()!.total }}</div>
+                <div class="text-[10px] font-mono font-bold uppercase tracking-tighter text-vroom-muted leading-tight">Tried</div>
               </div>
-              <div>
-                <div class="text-base num-value text-vroom-green">{{ progressStats()!.passed }}</div>
-                <div class="text-xs font-body text-vroom-muted leading-tight">Passed</div>
+              <div class="group/stat">
+                <div class="text-lg font-display font-black text-vroom-green">{{ progressStats()!.passed }}</div>
+                <div class="text-[10px] font-mono font-bold uppercase tracking-tighter text-vroom-muted leading-tight">Passed</div>
               </div>
-              <div>
-                <div class="text-base num-value text-vroom-accent">{{ progressStats()!.totalPts | number }}</div>
-                <div class="text-xs font-body text-vroom-muted leading-tight">Points</div>
+              <div class="group/stat">
+                <div class="text-lg font-display font-black text-vroom-accent">{{ progressStats()!.totalPts | number }}</div>
+                <div class="text-[10px] font-mono font-bold uppercase tracking-tighter text-vroom-muted leading-tight">Points</div>
               </div>
             </div>
           }
         </div>
 
         <!-- Tab nav -->
-        <nav class="card rounded-2xl overflow-hidden">
+        <nav class="card rounded-2xl overflow-hidden divide-y divide-vroom-border/50">
           @for (tab of [
             { key: 'profile',  label: 'Profile',  emoji: '👤' },
             { key: 'security', label: 'Security', emoji: '🔒' },
             { key: 'account',  label: 'Account',  emoji: '⚙️' }
           ]; track tab.key) {
             <button (click)="setTab(tab.key)"
-                    class="w-full flex items-center gap-3 px-4 py-3 text-sm font-body transition-colors text-left border-b border-vroom-border last:border-0"
-                    [class.bg-vroom-accent/10]="activeTab() === tab.key"
-              [class.text-vroom-text]="activeTab() === tab.key"
-              [class.border-l-2]="activeTab() === tab.key"
-              [class.border-l-vroom-accent]="activeTab() === tab.key"
-              [class.text-vroom-text-dim]="activeTab() !== tab.key"
-              [class.hover:text-vroom-text]="activeTab() !== tab.key"
-              [class.hover:bg-vroom-surface]="activeTab() !== tab.key">
-            <span>{{ tab.emoji }}</span>
-            <span>{{ tab.label }}</span>
-            @if (activeTab() === tab.key) {
-              <svg class="w-3.5 h-3.5 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-              </svg>
-            }
+                    class="w-full flex items-center gap-3 px-5 py-4 text-sm font-body transition-all duration-300 text-left relative group"
+                    [class.bg-vroom-accent/5]="activeTab() === tab.key"
+                    [class.text-vroom-text]="activeTab() === tab.key"
+                    [class.text-vroom-text-dim]="activeTab() !== tab.key"
+                    [class.hover:text-vroom-text]="activeTab() !== tab.key"
+                    [class.hover:bg-vroom-surface/50]="activeTab() !== tab.key">
+              
+              <!-- Active Indicator -->
+              @if (activeTab() === tab.key) {
+                <div class="absolute left-0 top-0 bottom-0 w-1 bg-vroom-accent shadow-accent"></div>
+              }
+
+              <span class="text-lg transition-transform duration-300 group-hover:scale-110">{{ tab.emoji }}</span>
+              <span class="font-bold tracking-tight">{{ tab.label }}</span>
+              
+              @if (activeTab() === tab.key) {
+                <svg class="w-4 h-4 ml-auto text-vroom-accent animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
+                </svg>
+              } @else {
+                <svg class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 text-vroom-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+              }
             </button>
           }
         </nav>
@@ -332,12 +342,13 @@
         ───────────────────────────────────── -->
         @if (activeTab() === 'account') {
 
-          <!-- Quick links -->
-          <div class="card rounded-2xl overflow-hidden">
-            <div class="px-6 py-5 border-b border-vroom-border">
-              <h2 class="font-display font-semibold text-base text-vroom-text">Quick Navigation</h2>
+        <!-- Quick links -->
+        @if (authService.currentUser()?.role === Role.STUDENT) {
+          <div class="card rounded-2xl overflow-hidden group">
+            <div class="px-6 py-5 border-b border-vroom-border/50 bg-vroom-black/20">
+              <h2 class="font-display font-black text-base text-vroom-text tracking-tight">Quick Navigation</h2>
             </div>
-            <div class="divide-y divide-vroom-border">
+            <div class="divide-y divide-vroom-border/50">
               @for (link of [
                 { route: '/dashboard', emoji: '🏠', label: 'Dashboard',       desc: 'Your learning home' },
                 { route: '/scenarios', emoji: '🎬', label: 'Scenario Library', desc: 'Browse all scenarios' },
@@ -345,19 +356,23 @@
                 { route: '/badges',    emoji: '🏆', label: 'Badge Collection', desc: 'Achievements earned' }
               ]; track link.route) {
                 <a [routerLink]="link.route"
-                   class="flex items-center gap-4 px-6 py-4 hover:bg-vroom-surface/50 transition-colors group">
-                  <span class="text-xl">{{ link.emoji }}</span>
-                  <div class="flex-1">
-                    <p class="text-sm font-body font-medium text-vroom-text">{{ link.label }}</p>
-                    <p class="text-xs font-body text-vroom-muted">{{ link.desc }}</p>
+                   class="flex items-center gap-4 px-6 py-5 hover:bg-vroom-surface/50 transition-all duration-300 group/link relative overflow-hidden">
+                  <div class="absolute inset-0 bg-gradient-to-r from-vroom-accent/5 to-transparent opacity-0 group-hover/link:opacity-100 transition-opacity duration-500"></div>
+                  <span class="text-2xl transition-transform duration-300 group-hover/link:scale-110 relative z-10">{{ link.emoji }}</span>
+                  <div class="flex-1 relative z-10">
+                    <p class="text-sm font-display font-bold text-vroom-text tracking-tight group-hover/link:text-vroom-accent transition-colors">{{ link.label }}</p>
+                    <p class="text-xs font-body text-vroom-muted mt-0.5">{{ link.desc }}</p>
                   </div>
-                  <svg class="w-4 h-4 text-vroom-muted group-hover:text-vroom-accent group-hover:translate-x-0.5 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                  </svg>
+                  <div class="w-8 h-8 rounded-lg bg-vroom-surface border border-vroom-border flex items-center justify-center group-hover/link:border-vroom-accent/30 group-hover/link:bg-vroom-accent/10 transition-all duration-300 relative z-10">
+                    <svg class="w-4 h-4 text-vroom-muted group-hover/link:text-vroom-accent group-hover/link:translate-x-0.5 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
+                    </svg>
+                  </div>
                 </a>
               }
             </div>
           </div>
+        }
 
           <!-- Danger zone -->
           <div class="card rounded-2xl overflow-hidden border border-red-500/15">

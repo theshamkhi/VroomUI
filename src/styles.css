@@ -12,6 +12,8 @@
   html {
     @apply bg-vroom-black text-vroom-text;
     font-family: 'DM Sans', sans-serif;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1, 'lnum' 1;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -29,16 +31,33 @@
   }
 
   ::-webkit-scrollbar-track {
-    background: #0A0A0F;
+    background: #08080C;
   }
 
   ::-webkit-scrollbar-thumb {
-    background: #1E1E2E;
+    background: #1F1F2E;
     border-radius: 3px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: #FF4D1C;
+    background: #2A2A3F;
+  }
+
+  /* Global Card & Layout Refinements */
+  .card {
+    @apply bg-vroom-card border border-vroom-border shadow-card backdrop-blur-sm transition-all duration-300;
+  }
+
+  .card:hover {
+    @apply border-vroom-border-bright shadow-card-hover;
+  }
+
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-accent-gradient;
+  }
+
+  .glass-panel {
+    @apply bg-vroom-card/80 backdrop-blur-xl border border-white/5;
   }
 }
 
