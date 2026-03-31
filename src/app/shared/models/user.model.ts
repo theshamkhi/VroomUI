@@ -17,6 +17,7 @@ export interface User {
 }
 
 export interface Student extends User {
+  enabled?: boolean;
   totalPoints: number;
   completedScenarios?: number;
   scenariosCompleted?: number;
@@ -45,8 +46,8 @@ export interface Instructor extends User {
 }
 
 export interface AuthResponse {
-  accessToken: string;
-  refreshToken: string;
+  accessToken: string | null;
+  refreshToken: string | null;
   tokenType: string;
   expiresIn: number;
   userId: string;

@@ -1,0 +1,161 @@
+<div class="min-h-full bg-vroom-black">
+
+  <div class="border-b border-vroom-border bg-vroom-dark">
+    <div class="max-w-7xl mx-auto px-6 lg:px-8 py-8">
+      <div class="flex items-center justify-between gap-4">
+        <div>
+          <h1 class="text-2xl lg:text-3xl font-display font-bold text-vroom-text tracking-tight">My Badges & Catalog</h1>
+          <p class="text-vroom-text-dim font-body text-sm mt-1">
+            View your achievements and discover new ones to unlock
+          </p>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-mono font-bold tabular-nums px-3 py-1.5 rounded-full bg-vroom-surface border border-vroom-border text-vroom-text">
+            {{ earnedCount() }}/{{ totalCount() }} unlocked
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="max-w-7xl mx-auto px-6 lg:px-8 py-6 space-y-6">
+
+    @if (hasError()) {
+      <div class="flex flex-col items-center justify-center py-24 text-center">
+        <div class="text-5xl mb-4">⚠️</div>
+        <h2 class="font-display font-bold text-xl text-vroom-text mb-2">Couldn't load your badges</h2>
+        <button (click)="load()" class="btn-primary mt-4 text-sm">Retry</button>
+      </div>
+    }
+
+    @else if (isLoading()) {
+      <div class="flex gap-2">
+        @for (t of [1,2,3,4,5]; track $index) {
+          <div class="h-9 w-24 rounded-xl bg-vroom-surface animate-pulse"></div>
+        }
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+        @for (s of Array(12).fill(0); track $index) {
+          <div class="card rounded-2xl p-4 flex flex-col items-center gap-3 animate-pulse">
+            <div class="w-14 h-14 rounded-2xl bg-vroom-surface"></div>
+            <div class="h-3 bg-vroom-surface rounded-full w-3/4"></div>
+            <div class="h-2 bg-vroom-surface rounded-full w-1/2"></div>
+          </div>
+        }
+      </div>
+    }
+
+    @else if (earnedCount() === 0) {
+      <div class="flex flex-col items-center justify-center py-28 text-center">
+        <div class="text-6xl mb-4">🏅</div>
+        <h2 class="font-display font-bold text-xl text-vroom-text mb-2">No badges yet</h2>
+        <p class="text-vroom-text-dim font-body text-sm mb-6">Complete scenarios to start unlocking rewards.</p>
+        <a routerLink="/scenarios" class="btn-primary inline-flex items-center gap-2 text-sm">Start a Scenario</a>
+      </div>
+    }
+
+    @else {
+
+      <div class="flex gap-2 flex-wrap">
+        @for (tab of tabs(); track tab.type) {
+          <button (click)="setFilter(tab.type)"
+                  class="flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-body transition-all duration-200"
+                  [class.bg-vroom-accent]="activeFilter() === tab.type"
+                  [class.border-vroom-accent]="activeFilter() === tab.type"
+                  [class.text-white]="activeFilter() === tab.type"
+                  [class.bg-vroom-surface]="activeFilter() !== tab.type"
+                  [class.border-vroom-border]="activeFilter() !== tab.type"
+                  [class.text-vroom-text-dim]="activeFilter() !== tab.type"
+                  [class.hover:border-vroom-accent]="activeFilter() !== tab.type">
+            <span>{{ tab.emoji }}</span>
+            <span>{{ tab.label }}</span>
+            <span class="text-xs font-mono px-1.5 py-0.5 rounded-lg"
+                  [class.bg-white]="activeFilter() === tab.type"
+                  [class.text-vroom-accent]="activeFilter() === tab.type"
+                  [class.bg-vroom-border]="activeFilter() !== tab.type"
+                  [class.text-vroom-muted]="activeFilter() !== tab.type">
+              {{ tab.earnedCount }}/{{ tab.totalCount }}
+            </span>
+          </button>
+        }
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+        @for (card of badgeCards(); track card.badge.id) {
+          <div class="group relative rounded-2xl border p-4 flex flex-col items-center gap-3 transition-all duration-300"
+               [class.bg-vroom-card]="!card.earned"
+               [class.border-vroom-border]="!card.earned"
+               [class.bg-vroom-accent\/5]="card.earned"
+               [class.border-vroom-accent\/30]="card.earned">
+
+            <div class="relative">
+              <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl transition-all"
+                   [class.grayscale]="!card.earned"
+                   [class.opacity-40]="!card.earned">
+                @if (card.badge.iconUrl) {
+                  <img [src]="card.badge.iconUrl" [alt]="card.badge.name" class="w-10 h-10 object-contain"/>
+                } @else {
+                  <span>{{ typeEmoji(card.badge.type) }}</span>
+                }
+              </div>
+              @if (card.earned) {
+                <div class="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-vroom-green border-2 border-vroom-dark flex items-center justify-center z-20">
+                  <svg class="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                  </svg>
+                </div>
+              }
+            </div>
+
+            <div class="text-center">
+              <p class="text-xs font-body font-semibold leading-snug line-clamp-2"
+                 [class.text-vroom-text]="card.earned"
+                 [class.text-vroom-muted]="!card.earned">
+                {{ card.badge.name }}
+              </p>
+              <p class="text-[11px] font-body mt-1"
+                 [class.text-vroom-accent]="card.earned"
+                 [class.text-vroom-subtle]="!card.earned">
+                {{ typeLabel(card.badge.type) }}
+              </p>
+            </div>
+
+            @if (card.earned && card.earnedAt) {
+              <div class="text-[10px] font-mono text-vroom-muted mt-auto">
+                {{ relativeTime(card.earnedAt) }}
+              </div>
+            } @else if (!card.earned && card.progressPct > 0) {
+              <div class="w-full mt-auto">
+                <div class="flex items-center justify-between mb-1">
+                  <span class="text-[10px] font-mono text-vroom-muted">{{ card.progressPct }}%</span>
+                </div>
+                <div class="w-full h-1 bg-vroom-surface rounded-full overflow-hidden">
+                  <div class="h-full rounded-full transition-all duration-700"
+                       [class]="typeBarColor(card.badge.type)"
+                       [style.width.%]="card.progressPct">
+                  </div>
+                </div>
+              </div>
+            }
+
+            <div class="absolute -top-2 left-1/2 -translate-x-1/2 -translate-y-full w-52
+                        bg-vroom-card border border-vroom-border rounded-xl px-3 py-2.5
+                        opacity-0 group-hover:opacity-100 transition-opacity duration-200
+                        pointer-events-none z-30 shadow-card text-center">
+              <p class="text-xs font-body font-semibold text-vroom-text mb-1">{{ card.badge.name }}</p>
+              <p class="text-xs font-body text-vroom-text-dim leading-snug mb-2">{{ card.badge.description }}</p>
+              @if (!card.earned && card.progressLabel) {
+                <p class="text-[10px] font-mono text-vroom-muted border-t border-vroom-border pt-2 mt-1">
+                  {{ card.progressLabel }}
+                </p>
+              }
+            </div>
+          </div>
+        }
+      </div>
+
+    }
+
+  </div>
+</div>

@@ -36,6 +36,7 @@ export interface Scenario {
   difficulty: Difficulty;
   theme: Theme;
   status: ScenarioStatus;
+  published?: boolean;
   videoId?: string;
   thumbnailUrl?: string;
   durationSeconds: number;
