@@ -100,6 +100,12 @@ export class InstructorScenariosComponent implements OnInit {
 
   ngOnInit(): void { this.load(); }
 
+  private normalizeScenario(s: Scenario): Scenario {
+    if ((s as Scenario).status === ScenarioStatus.PUBLISHED) return s;
+    if ((s as Scenario).published === true) return { ...s, status: ScenarioStatus.PUBLISHED };
+    return s;
+  }
+
   load(): void {
     this.isLoading.set(true);
     this.hasError.set(false);
@@ -113,7 +119,7 @@ export class InstructorScenariosComponent implements OnInit {
       next: ({ scenarios, students }) => {
         const me = this.authService.currentUser();
         const mine = me ? (scenarios ?? []).filter(s => s.createdBy === me.id) : (scenarios ?? []);
-        this.scenarios.set(mine);
+        this.scenarios.set(mine.map(s => this.normalizeScenario(s)));
         this.students.set(students ?? []);
         this.isLoading.set(false);
       },
@@ -137,7 +143,7 @@ export class InstructorScenariosComponent implements OnInit {
       .pipe(catchError(() => of(null)))
       .subscribe(updated => {
         this.actionInProgress.set(null);
-        if (updated) this.scenarios.update(list => list.map(x => x.id === updated.id ? updated : x));
+        if (updated) this.scenarios.update(list => list.map(x => x.id === updated.id ? this.normalizeScenario(updated) : x));
       });
   }
 

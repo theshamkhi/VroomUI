@@ -460,7 +460,14 @@ export class ScenarioEditorComponent implements OnInit, OnDestroy {
     const t = this.pendingPin(); const sid = this.scenarioId();
     if (t === null || !sid || !q.id) return;
     this.isSavingPin.set(true); this.timelineError.set(null);
-    const body = { questionId: q.id, timestampSeconds: t, orderIndex: qIdx };
+    const body = {
+      questionId: q.id,
+      timestampSeconds: t,
+      orderIndex: qIdx,
+      title: (q.questionText ?? '').slice(0, 120) || 'Question',
+      mandatory: true,
+      description: q.hint || undefined,
+    };
     const req = q.interactionPointId
       ? this.http.put<InteractionPoint>(`${environment.apiUrl}/scenarios/${sid}/interaction-points/${q.interactionPointId}`, body)
       : this.http.post<InteractionPoint>(`${environment.apiUrl}/scenarios/${sid}/interaction-points`, body);

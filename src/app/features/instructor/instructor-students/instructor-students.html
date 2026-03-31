@@ -4,12 +4,12 @@
   <div class="flex-1 min-w-0 flex flex-col">
 
     <!-- Header -->
-    <div class="border-b border-vroom-border bg-vroom-dark px-6 lg:px-8 py-5 flex-shrink-0">
-      <div class="max-w-5xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div class="border-b border-vroom-border bg-vroom-dark">
+      <div class="max-w-5xl mx-auto px-6 lg:px-8 py-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 class="text-2xl font-display font-bold text-vroom-text">Students</h1>
+          <h1 class="text-2xl lg:text-3xl font-display font-bold text-vroom-text tracking-tight">Students</h1>
           @if (!isLoading()) {
-            <p class="text-vroom-text-dim font-body text-sm mt-0.5">
+            <p class="text-vroom-text-dim font-body text-sm mt-1">
               <span class="font-body font-bold tabular-nums">{{ counts().all }}</span> enrolled ·
               avg completion <span class="font-body font-bold tabular-nums">{{ avgCompletion() }}%</span>
             </p>
@@ -18,15 +18,11 @@
         @if (!isLoading() && students().length > 0) {
           <div class="flex items-center gap-3">
             <div class="px-4 py-2 rounded-xl bg-vroom-surface border border-vroom-border text-center">
-              <p class="text-xs font-body text-vroom-muted mb-0.5">Active</p>
-              <p class="font-body font-bold tabular-nums text-green-400 text-lg leading-none">{{ counts().active }}</p>
+              <p class="text-[10px] font-mono uppercase tracking-wider text-vroom-muted mb-0.5">Active</p>
+              <p class="font-body font-bold tabular-nums text-vroom-green text-lg leading-none">{{ counts().active }}</p>
             </div>
             <div class="px-4 py-2 rounded-xl bg-vroom-surface border border-vroom-border text-center">
-              <p class="text-xs font-body text-vroom-muted mb-0.5">At Risk</p>
-              <p class="font-body font-bold tabular-nums text-amber-400 text-lg leading-none">{{ counts().atRisk }}</p>
-            </div>
-            <div class="px-4 py-2 rounded-xl bg-vroom-surface border border-vroom-border text-center">
-              <p class="text-xs font-body text-vroom-muted mb-0.5">Inactive</p>
+              <p class="text-[10px] font-mono uppercase tracking-wider text-vroom-muted mb-0.5">Inactive</p>
               <p class="font-body font-bold tabular-nums text-vroom-muted text-lg leading-none">{{ counts().inactive }}</p>
             </div>
           </div>
@@ -60,7 +56,6 @@
             @for (tab of [
               { value: 'ALL',      label: 'All',      count: counts().all },
               { value: 'ACTIVE',   label: 'Active',   count: counts().active },
-              { value: 'AT_RISK',  label: 'At Risk',  count: counts().atRisk },
               { value: 'INACTIVE', label: 'Inactive', count: counts().inactive }
             ]; track tab.value) {
               <button (click)="setActivityFilter(tab.value)"
@@ -182,7 +177,7 @@
                   <div class="text-right">
                       <span class="text-xs font-body font-medium px-2 py-0.5 rounded-lg border flex items-center gap-1.5" [class]="activityBadge(s.activityStatus)">
                         <span class="w-1.5 h-1.5 rounded-full flex-shrink-0" [class]="activityDot(s.activityStatus)"></span>
-                        {{ s.activityStatus === 'AT_RISK' ? 'At Risk' : s.activityStatus === 'ACTIVE' ? 'Active' : 'Inactive' }}
+                        {{ s.activityStatus === 'ACTIVE' ? 'Active' : 'Inactive' }}
                       </span>
                     @if (s.recentActivity) {
                       <p class="text-[10px] font-body text-vroom-muted mt-0.5">{{ s.recentActivity }}</p>
@@ -230,7 +225,7 @@
         <div class="flex items-center justify-between">
           <span class="text-xs font-body font-medium px-2.5 py-1 rounded-xl border inline-flex items-center gap-1.5" [class]="activityBadge(s.activityStatus)">
             <span class="w-1.5 h-1.5 rounded-full" [class]="activityDot(s.activityStatus)"></span>
-            {{ s.activityStatus === 'AT_RISK' ? 'At Risk' : s.activityStatus === 'ACTIVE' ? 'Active' : 'Inactive' }}
+            {{ s.activityStatus === 'ACTIVE' ? 'Active' : 'Inactive' }}
             @if (s.recentActivity) { · {{ s.recentActivity }} }
           </span>
           <!-- Assign button -->

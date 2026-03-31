@@ -1,12 +1,12 @@
 <div class="min-h-full bg-vroom-black">
 
   <!-- ══ HEADER ══ -->
-  <div class="border-b border-vroom-border bg-vroom-dark px-6 lg:px-8 py-5">
-    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+  <div class="border-b border-vroom-border bg-vroom-dark">
+    <div class="max-w-7xl mx-auto px-6 lg:px-8 py-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-display font-bold text-vroom-text">Video Library</h1>
+        <h1 class="text-2xl lg:text-3xl font-display font-bold text-vroom-text tracking-tight">Video Library</h1>
         @if (!isLoading()) {
-          <p class="text-vroom-text-dim font-body text-sm mt-0.5">
+          <p class="text-vroom-text-dim font-body text-sm mt-1">
             <span class="font-body font-bold tabular-nums">{{ counts().all }}</span> videos · <span class="font-body font-bold tabular-nums">{{ totalSize() }}</span> total
           </p>
         }

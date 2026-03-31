@@ -3,19 +3,28 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { catchError, forkJoin, of } from 'rxjs';
+import { catchError, forkJoin, of, switchMap } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { Student } from '../../../shared/models/user.model';
 import { Progress, CompletionStatus } from '../../../shared/models/progress.model';
 import { Scenario, ScenarioStatus, Assignment, AssignmentStatus, CreateAssignmentRequest } from '../../../shared/models/scenario.model';
 
 type SortField = 'name' | 'level' | 'points' | 'scenarios' | 'completion' | 'enrolled';
-type ActivityFilter = 'ALL' | 'ACTIVE' | 'AT_RISK' | 'INACTIVE';
+type ActivityFilter = 'ALL' | 'ACTIVE' | 'INACTIVE';
 
 interface StudentWithStats extends Student {
   progressList?: Progress[];
   recentActivity?: string;
   activityStatus: ActivityFilter;
+}
+
+interface StudentComputedStats {
+  totalPoints: number;
+  currentLevel: number;
+  averageScore: number;
+  completionPercentage: number;
+  completedScenarios: number;
+  scenariosCompleted: number;
 }
 
 @Component({
@@ -98,7 +107,6 @@ export class InstructorStudentsComponent implements OnInit {
     return {
       all:      s.length,
       active:   s.filter(x => x.activityStatus === 'ACTIVE').length,
-      atRisk:   s.filter(x => x.activityStatus === 'AT_RISK').length,
       inactive: s.filter(x => x.activityStatus === 'INACTIVE').length,
     };
   });
@@ -121,21 +129,77 @@ export class InstructorStudentsComponent implements OnInit {
         .pipe(catchError(() => of([]))),
       scenarios: this.http.get<Scenario[]>(`${environment.apiUrl}/scenarios`)
         .pipe(catchError(() => of([]))),
-    }).subscribe(({ students, scenarios }) => {
-      this.students.set((students ?? []).map(s => this.enrichStudent(s)));
-      this.assignScenarios.set(scenarios ?? []);
-      this.isLoading.set(false);
+    }).pipe(
+      switchMap(({ students, scenarios }) => {
+        this.assignScenarios.set(scenarios ?? []);
+        if (!students?.length) return of({ students: [], progressArrays: [] as Progress[][] });
+
+        return forkJoin(
+          (students ?? []).map(st =>
+            this.http.get<Progress[]>(`${environment.apiUrl}/progress/student/${st.id}`)
+              .pipe(catchError(() => of([])))
+          )
+        ).pipe(
+          switchMap((progressArrays) => of({ students: students ?? [], progressArrays }))
+        );
+      })
+    ).subscribe({
+      next: ({ students, progressArrays }) => {
+        const enriched = (students ?? []).map((s, idx) => this.enrichStudent(s, progressArrays[idx] ?? []));
+        this.students.set(enriched);
+        this.isLoading.set(false);
+      },
+      error: () => {
+        this.isLoading.set(false);
+        this.hasError.set(true);
+      }
     });
   }
 
-  private enrichStudent(s: Student): StudentWithStats {
+  private enrichStudent(s: Student, progressList: Progress[]): StudentWithStats {
+    const stats = this.computeStatsFromProgress(progressList);
+
+    const enabled = s.enabled !== false;
+
     const lastLogin = s.lastLoginAt ? new Date(s.lastLoginAt) : null;
-    const daysSince = lastLogin ? Math.floor((Date.now() - lastLogin.getTime()) / 86400000) : 999;
-    const completion = s.completionPercentage ?? 0;
-    let activityStatus: ActivityFilter = 'INACTIVE';
-    if (daysSince <= 7) activityStatus = 'ACTIVE';
-    else if (daysSince <= 30 || completion > 0) activityStatus = 'AT_RISK';
-    return { ...s, activityStatus, recentActivity: lastLogin ? this.relativeTime(s.lastLoginAt) : undefined };
+    const activityStatus: ActivityFilter = enabled ? 'ACTIVE' : 'INACTIVE';
+
+    return {
+      ...s,
+      ...stats,
+      progressList,
+      activityStatus,
+      recentActivity: lastLogin ? this.relativeTime(s.lastLoginAt) : undefined,
+    };
+  }
+
+  private computeStatsFromProgress(progressList: Progress[]): StudentComputedStats {
+    const completed = progressList.filter(p =>
+      p.status === CompletionStatus.COMPLETED_PASSED ||
+      p.status === CompletionStatus.COMPLETED_FAILED
+    );
+
+    const totalPoints = progressList.reduce((sum, p) => sum + (p.totalPointsEarned ?? 0), 0);
+
+    const scores = completed.filter(p => (p.highestScore ?? 0) > 0).map(p => p.highestScore ?? 0);
+    const averageScore = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
+
+    const total = progressList.length || 0;
+    const completionPercentage = total ? Math.round((completed.length / total) * 100) : 0;
+
+    const completedScenarios = completed.length;
+    const scenariosCompleted = completed.length;
+
+    const currentLevel = Math.max(1, Math.floor(totalPoints / 500) + 1);
+
+    return {
+      totalPoints,
+      currentLevel,
+      averageScore,
+      completionPercentage,
+      completedScenarios,
+      scenariosCompleted,
+    };
   }
 
   setSort(field: SortField): void {
@@ -241,13 +305,13 @@ export class InstructorStudentsComponent implements OnInit {
   }
 
   activityBadge(s: ActivityFilter): string {
-    return s === 'ACTIVE' ? 'bg-green-500/10 border-green-500/25 text-green-400'
-      : s === 'AT_RISK' ? 'bg-amber-500/10 border-amber-500/25 text-amber-400'
-        : 'bg-vroom-surface border-vroom-border text-vroom-muted';
+    return s === 'ACTIVE'
+      ? 'bg-green-500/10 border-green-500/25 text-green-400'
+      : 'bg-vroom-surface border-vroom-border text-vroom-muted';
   }
 
   activityDot(s: ActivityFilter): string {
-    return s === 'ACTIVE' ? 'bg-green-400 animate-pulse' : s === 'AT_RISK' ? 'bg-amber-400' : 'bg-vroom-muted';
+    return s === 'ACTIVE' ? 'bg-green-400 animate-pulse' : 'bg-vroom-muted';
   }
 
   assignmentStatusBadge(s: AssignmentStatus): string {

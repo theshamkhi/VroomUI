@@ -1,12 +1,12 @@
 <div class="min-h-full bg-vroom-black">
 
   <!-- ══ HEADER ══ -->
-  <div class="border-b border-vroom-border bg-vroom-dark px-6 lg:px-8 py-5">
-    <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
+  <div class="border-b border-vroom-border bg-vroom-dark">
+    <div class="max-w-7xl mx-auto px-6 lg:px-8 py-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-display font-bold text-vroom-text">My Scenarios</h1>
+        <h1 class="text-2xl lg:text-3xl font-display font-bold text-vroom-text tracking-tight">My Scenarios</h1>
         @if (!isLoading()) {
-          <p class="text-vroom-text-dim font-body text-sm mt-0.5">{{ counts().all }} total</p>
+          <p class="text-vroom-text-dim font-body text-sm mt-1">{{ counts().all }} total scenarios</p>
         }
       </div>
       <a routerLink="/instructor/scenarios/new" class="btn-primary inline-flex items-center gap-2 text-sm flex-shrink-0">
