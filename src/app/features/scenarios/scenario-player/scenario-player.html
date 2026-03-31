@@ -69,6 +69,26 @@
           <button (click)="exitPlayer()" class="btn-secondary w-full">Back to scenario</button>
         </div>
       </div>
+
+      <!-- Badge Unlocked Overlay -->
+      @if (newBadge()) {
+        <div class="absolute inset-0 z-50 flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm animate-fade-in">
+          <div class="bg-vroom-dark border border-vroom-accent/30 rounded-3xl p-8 max-w-sm w-full text-center shadow-[0_0_50px_rgba(255,77,28,0.2)]" style="animation: slideUp 0.4s ease-out both;">
+            <div class="text-5xl mb-4 animate-bounce">🏆</div>
+            <h3 class="text-2xl font-display font-bold text-white mb-2">Badge Unlocked!</h3>
+            <div class="w-20 h-20 mx-auto bg-vroom-accent/10 border border-vroom-accent/30 rounded-2xl flex items-center justify-center mb-4">
+              @if (newBadge()?.badge?.iconUrl) {
+                <img [src]="newBadge()?.badge?.iconUrl" class="w-12 h-12 object-contain" />
+              } @else {
+                <span class="text-4xl">🏅</span>
+              }
+            </div>
+            <p class="text-vroom-accent font-display font-bold text-lg mb-1">{{ newBadge()?.badge?.name }}</p>
+            <p class="text-white/60 font-body text-sm mb-6">{{ newBadge()?.badge?.description }}</p>
+            <button (click)="newBadge.set(null)" class="btn-primary w-full py-3">Awesome!</button>
+          </div>
+        </div>
+      }
     </div>
   }
 
@@ -151,7 +171,7 @@
         @let ip = activeIP()!;
 
         <!-- Backdrop dimmer -->
-        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm z-20 animate-fade-in animate-fill-both"></div>
+        <div class="absolute inset-0 bg-black/30 z-20 animate-fade-in animate-fill-both"></div>
 
         <!-- Question card -->
         <div class="absolute inset-x-0 bottom-0 z-30 flex justify-center pb-4 px-4"
@@ -248,35 +268,45 @@
               <!-- Footer: feedback or submit -->
               @if (phase() === 'feedback' && lastResult()) {
                 <div class="px-5 pb-5">
-                  <div class="rounded-xl px-4 py-3 flex items-start gap-3 mb-3"
-                       [class.bg-vroom-green]="lastResult()!.correct"
-                  [class.border-vroom-green]="lastResult()!.correct"
-                  [class.border]="true"
-                  [class.bg-red-500]="!lastResult()!.correct"
-                  [class.border-red-500]="!lastResult()!.correct">
-                  <div class="text-xl flex-shrink-0 mt-0.5">
-                    {{ lastResult()!.correct ? '✅' : '❌' }}
-                  </div>
-                  <div class="flex-1">
-                    <div class="flex items-center justify-between mb-1">
-                        <span class="text-sm font-display font-semibold"
-                              [class.text-vroom-green]="lastResult()!.correct"
-                              [class.text-red-400]="!lastResult()!.correct">
-                          {{ lastResult()!.correct ? 'Correct!' : 'Not quite' }}
-                        </span>
+                  <div class="rounded-xl px-4 py-3 flex items-start gap-3 mb-3 border"
+                       [class.bg-green-500\/10]="lastResult()!.correct"
+                       [class.border-green-500\/25]="lastResult()!.correct"
+                       [class.bg-red-500\/10]="!lastResult()!.correct"
+                       [class.border-red-500\/25]="!lastResult()!.correct">
+                    <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 border"
+                         [class.bg-green-500\/10]="lastResult()!.correct"
+                         [class.border-green-500\/25]="lastResult()!.correct"
+                         [class.bg-red-500\/10]="!lastResult()!.correct"
+                         [class.border-red-500\/25]="!lastResult()!.correct">
                       @if (lastResult()!.correct) {
-                        <span class="text-xs font-mono font-semibold text-vroom-accent">
-                            +{{ lastResult()!.pointsEarned }} pts
-                          </span>
+                        <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                      } @else {
+                        <svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
                       }
                     </div>
-                    @if (lastResult()!.explanation) {
-                      <p class="text-xs font-body text-vroom-text-dim leading-relaxed">
-                        {{ lastResult()!.explanation }}
-                      </p>
-                    }
+
+                    <div class="flex-1">
+                      <div class="flex items-center justify-between mb-1">
+                        <span class="text-sm font-display font-semibold text-white">
+                          {{ lastResult()!.correct ? 'Correct' : 'Incorrect' }}
+                        </span>
+                        @if (lastResult()!.correct) {
+                          <span class="text-xs font-mono font-semibold text-white/80">
+                            +{{ lastResult()!.pointsEarned }} pts
+                          </span>
+                        }
+                      </div>
+                      @if (lastResult()!.explanation) {
+                        <p class="text-xs font-body text-white/70 leading-relaxed">
+                          {{ lastResult()!.explanation }}
+                        </p>
+                      }
+                    </div>
                   </div>
-                </div>
                 <button (click)="dismissFeedback()"
                         class="w-full btn-primary py-2.5 text-sm flex items-center justify-center gap-2">
                   Continue

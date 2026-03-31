@@ -81,7 +81,11 @@ export class ScenarioDetailComponent implements OnInit {
 
       this.scenario.set(scenario);
       this.progress.set(progress);
-      this.questions.set(questions ?? []);
+      
+      // Only show questions if the student has already passed the scenario
+      const hasPassed = progress?.status === CompletionStatus.COMPLETED_PASSED;
+      this.questions.set(hasPassed ? (questions ?? []) : []);
+      
       // Filter out self from related
       this.relatedScenarios.set((related ?? []).filter(r => r.id !== id).slice(0, 4));
       this.isLoading.set(false);

@@ -78,8 +78,23 @@
         <div class="lg:col-span-3 space-y-6">
 
           <!-- Hero banner -->
-          <div class="relative rounded-2xl overflow-hidden"
-               [style]="'background: linear-gradient(135deg, ' + themeGradient(s.theme) + ')'">
+          <div class="w-full h-full rounded-2xl border border-vroom-border bg-vroom-surface overflow-hidden relative"
+               [style.background]="scenario()?.thumbnailUrl ? 'none' : 'linear-gradient(135deg, ' + themeGradient(scenario()?.theme ?? Theme.URBAN_DRIVING) + ')'">
+            @if (scenario()?.thumbnailUrl) {
+              <img [src]="scenario()?.thumbnailUrl" class="w-full h-full object-cover" />
+              <div class="absolute inset-0 bg-black/20"></div>
+            } @else {
+              <div class="absolute inset-0 flex items-center justify-center">
+                <span class="text-7xl opacity-40 select-none">{{ themeEmoji(scenario()?.theme ?? Theme.URBAN_DRIVING) }}</span>
+              </div>
+            }
+
+            <!-- Subtle grid overlay -->
+            <div class="absolute inset-0 opacity-[0.04]" style="
+              background-image: linear-gradient(rgba(255,255,255,1) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(255,255,255,1) 1px, transparent 1px);
+              background-size: 32px 32px;
+            "></div>
 
             <!-- Animated background grid -->
             <div class="absolute inset-0 opacity-[0.04]" style="

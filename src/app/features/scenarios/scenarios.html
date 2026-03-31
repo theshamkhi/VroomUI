@@ -3,11 +3,11 @@
   <!-- ═══════════════════════════════════════
     PAGE HEADER
   ═══════════════════════════════════════ -->
-  <div class="border-b border-vroom-border bg-vroom-dark px-6 lg:px-8 py-6">
-    <div class="max-w-7xl mx-auto">
+  <div class="border-b border-vroom-border bg-vroom-dark">
+    <div class="max-w-7xl mx-auto px-6 lg:px-8 py-8">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 class="text-2xl font-display font-bold text-vroom-text">Scenario Library</h1>
+          <h1 class="text-2xl lg:text-3xl font-display font-bold text-vroom-text tracking-tight">Scenario Library</h1>
           <p class="text-vroom-text-dim font-body text-sm mt-1">
             @if (!isLoading()) {
               <span class="text-vroom-text font-medium">{{ stats().total }}</span> scenarios &nbsp;·&nbsp;
@@ -237,15 +237,23 @@
              class="group card-hover rounded-2xl overflow-hidden flex flex-col cursor-pointer relative">
 
             <!-- Thumbnail header -->
-            <div class="relative h-36 overflow-hidden"
-                 [style]="'background: linear-gradient(135deg, ' + themeGradient(scenario.theme) + ')'">
-
-              <!-- Theme emoji -->
-              <div class="absolute inset-0 flex items-center justify-center">
-                <span class="text-5xl opacity-40 group-hover:opacity-60 group-hover:scale-110 transition-all duration-300 select-none">
-                  {{ themeEmoji(scenario.theme) }}
-                </span>
-              </div>
+            <div class="relative h-36 overflow-hidden bg-vroom-surface">
+              @if (scenario.thumbnailUrl) {
+                <img [src]="scenario.thumbnailUrl"
+                     [alt]="scenario.title"
+                     class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                <div class="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors"></div>
+              } @else {
+                <div class="absolute inset-0"
+                     [style]="'background: linear-gradient(135deg, ' + themeGradient(scenario.theme) + ')'">
+                  <!-- Theme emoji -->
+                  <div class="absolute inset-0 flex items-center justify-center">
+                    <span class="text-5xl opacity-40 group-hover:opacity-60 group-hover:scale-110 transition-all duration-300 select-none">
+                      {{ themeEmoji(scenario.theme) }}
+                    </span>
+                  </div>
+                </div>
+              }
 
               <!-- Subtle grid overlay -->
               <div class="absolute inset-0 opacity-[0.04]" style="
@@ -338,10 +346,15 @@
           <a [routerLink]="['/scenarios', scenario.id]"
              class="group card-hover rounded-xl px-4 py-3.5 flex items-center gap-4 cursor-pointer">
 
-            <!-- Theme icon -->
-            <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl flex-shrink-0 border border-vroom-border bg-vroom-surface group-hover:border-vroom-accent/30 transition-colors">
-              {{ themeEmoji(scenario.theme) }}
+          <div class="flex-shrink-0">
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl border border-vroom-border bg-vroom-surface group-hover:border-vroom-accent/30 transition-all overflow-hidden">
+              @if (scenario.thumbnailUrl) {
+                <img [src]="scenario.thumbnailUrl" class="w-full h-full object-cover" />
+              } @else {
+                {{ themeEmoji(scenario.theme) }}
+              }
             </div>
+          </div>
 
             <!-- Main info -->
             <div class="flex-1 min-w-0">

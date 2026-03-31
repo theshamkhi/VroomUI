@@ -5,14 +5,15 @@ import {
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import { forkJoin, of, catchError, interval, Subscription } from 'rxjs';
+import { forkJoin, of, catchError, interval, Subscription, switchMap, take, tap } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import {
   Scenario, Question, InteractionPoint, QuestionType
 } from '../../../shared/models/scenario.model';
-import { SubmitAnswerRequest } from '../../../shared/models/progress.model';
+import { SubmitAnswerRequest, StudentBadge } from '../../../shared/models/progress.model';
 import { Video } from '../../../shared/models/api.model';
 import { AuthService } from '../../../core/services/auth.service';
+import { BadgesService } from '../../../core/services/badges.service';
 
 type PlayerPhase = 'loading' | 'error' | 'playing' | 'question' | 'feedback' | 'completed';
 
@@ -83,7 +84,14 @@ export class ScenarioPlayerComponent implements OnInit, OnDestroy {
   scorePct = computed(() => {
     const s = this.scenario();
     if (!s) return 0;
-    return Math.min(100, Math.round((this.totalPointsEarned() / s.maxPoints) * 100));
+
+    const possible = this.interactionPoints().reduce((sum, ip) => {
+      const q = this.questions().find(qq => qq.id === ip.questionId);
+      return sum + (q?.points ?? 0);
+    }, 0);
+
+    const denom = possible > 0 ? possible : (s.maxPoints || 1);
+    return Math.min(100, Math.round((this.totalPointsEarned() / denom) * 100));
   });
 
   // ── Feedback state ─────────────────────────
@@ -92,6 +100,7 @@ export class ScenarioPlayerComponent implements OnInit, OnDestroy {
   // ── Submission state ───────────────────────
   isSubmitting = signal(false);
   isCompleting = signal(false);
+  newBadge = signal<StudentBadge | null>(null);
 
   private api = environment.apiUrl;
 
@@ -100,7 +109,19 @@ export class ScenarioPlayerComponent implements OnInit, OnDestroy {
     private router: Router,
     private http: HttpClient,
     private authService: AuthService,
+    private badgesService: BadgesService,
   ) {}
+
+  private getStudentBadgeBadgeId(sb: StudentBadge): string | undefined {
+    const anySb = sb as any;
+    return (
+      sb.id ??
+      sb.badgeId ??
+      anySb.badge_id ??
+      sb.badge?.id ??
+      anySb.badge?.id
+    );
+  }
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id')!;
@@ -184,10 +205,7 @@ export class ScenarioPlayerComponent implements OnInit, OnDestroy {
   onPause(): void { this.isPlaying.set(false); }
   onEnded(): void {
     this.isPlaying.set(false);
-    // If all IPs answered, complete the scenario
-    if (this.answeredIPs().size >= this.interactionPoints().length) {
-      this.completeScenario();
-    }
+    this.completeScenario();
   }
 
   // ── Interaction point triggering ───────────
@@ -346,35 +364,62 @@ export class ScenarioPlayerComponent implements OnInit, OnDestroy {
     this.activeQuestion.set(null);
     this.activeIP.set(null);
 
-    // Check if all IPs done
-    const remaining = this.interactionPoints().filter(
-      ip => !this.answeredIPs().has(ip.id)
-    );
-
-    if (remaining.length === 0) {
-      this.completeScenario();
-    } else {
-      this.phase.set('playing');
-      this.videoElRef?.nativeElement.play().catch(() => {});
-    }
+    // Always resume playback after feedback. If no interaction points remain,
+    // the video should still continue until it ends.
+    this.phase.set('playing');
+    this.videoElRef?.nativeElement.play().catch(() => {});
   }
 
   // ── Complete scenario ──────────────────────
   completeScenario(): void {
     const s = this.scenario();
     if (!s || this.isCompleting()) return;
+
     this.isCompleting.set(true);
 
     const score = this.scorePct();
     const pts = this.totalPointsEarned();
 
-    this.http.post(
-      `${this.api}/progress/scenarios/${s.id}/complete?score=${score}&pointsEarned=${pts}`, {}
-    ).pipe(catchError(() => of(null)))
-      .subscribe(() => {
-        this.isCompleting.set(false);
-        this.phase.set('completed');
-      });
+    // 1. Get current badges before completion
+    this.badgesService.getMyBadges().pipe(
+      take(1),
+      catchError(() => of([] as StudentBadge[])),
+      switchMap(oldBadges => {
+        // 2. Complete scenario
+        return this.http.post(
+          `${this.api}/progress/scenarios/${s.id}/complete?score=${score}&pointsEarned=${pts}`, {}
+        ).pipe(
+          catchError(() => of(null)),
+          switchMap(() => {
+            // 3. Refresh profile (for totalPoints) and badges
+            return forkJoin({
+              user: this.authService.getCurrentUser().pipe(catchError(() => of(null))),
+              newBadges: this.badgesService.getMyBadges().pipe(catchError(() => of([] as StudentBadge[])))
+            }).pipe(
+              tap(({ newBadges }: { newBadges: StudentBadge[] }) => {
+                // 4. Check for newly earned badges
+                const oldIds = new Set(
+                  oldBadges
+                    .map((b: StudentBadge) => this.getStudentBadgeBadgeId(b))
+                    .filter((id): id is string => !!id)
+                );
+                const newlyEarned = newBadges.filter((b: StudentBadge) => {
+                  const id = this.getStudentBadgeBadgeId(b);
+                  return !!id && !oldIds.has(id);
+                });
+                
+                if (newlyEarned.length > 0) {
+                  this.newBadge.set(newlyEarned[0]);
+                }
+              })
+            );
+          })
+        );
+      })
+    ).subscribe(() => {
+      this.isCompleting.set(false);
+      this.phase.set('completed');
+    });
   }
 
   goToResults(): void {

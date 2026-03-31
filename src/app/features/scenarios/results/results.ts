@@ -69,14 +69,13 @@ export class ResultsComponent implements OnInit {
   passed = computed(() => {
     const s = this.scenario();
     if (!s) return false;
-    const threshold = Math.round((s.passingScore / s.maxPoints) * 100);
-    return this.displayScore() >= threshold;
+    return this.displayScore() >= (s.passingScore ?? 70);
   });
 
   passingThreshold = computed(() => {
     const s = this.scenario();
     if (!s) return 70;
-    return Math.round((s.passingScore / s.maxPoints) * 100);
+    return s.passingScore ?? 70;
   });
 
   accuracy = computed(() => {

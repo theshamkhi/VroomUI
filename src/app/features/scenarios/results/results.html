@@ -77,19 +77,23 @@
           <!-- Pass/fail badge -->
           <div class="absolute -bottom-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full border text-xs font-mono font-semibold"
                [class.bg-vroom-green]="passed()"
-          [class.border-vroom-green]="passed()"
-          [class.text-vroom-green]="passed()"
-          [class.bg-red-500]="!passed()"
-          [class.border-red-500]="!passed()"
-          [class.text-red-400]="!passed()">
-          {{ passed() ? '✓ PASSED' : '✗ FAILED' }}
+               [class.bg-opacity-10]="passed()"
+               [class.border-vroom-green]="passed()"
+               [class.border-opacity-30]="passed()"
+               [class.text-vroom-text]="passed()"
+               [class.bg-red-500]="!passed()"
+               [class.bg-opacity-10]="!passed()"
+               [class.border-red-500]="!passed()"
+               [class.border-opacity-30]="!passed()"
+               [class.text-vroom-text]="!passed()">
+            {{ passed() ? 'PASSED' : 'FAILED' }}
         </div>
       </div>
 
       <!-- Verdict text -->
       <div class="mt-5 mb-6">
         <h1 class="text-3xl font-display font-bold text-vroom-text mb-2">
-          {{ verdict().emoji }} {{ verdict().title }}
+          {{ verdict().title }}
         </h1>
         <p class="text-vroom-text-dim font-body text-sm max-w-sm mx-auto leading-relaxed">
           {{ verdict().subtitle }}
@@ -273,11 +277,11 @@
                 [class.bg-vroom-surface]="row.result === null"
                 [class.border-vroom-border]="row.result === null">
                 @if (row.result?.correct === true) {
-                  <svg class="w-3.5 h-3.5 text-vroom-green" fill="currentColor" viewBox="0 0 20 20">
+                  <svg class="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                   </svg>
                 } @else if (row.result?.correct === false) {
-                  <svg class="w-3.5 h-3.5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                  <svg class="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
                   </svg>
                 } @else {
@@ -326,8 +330,10 @@
                     <div class="flex items-start gap-3 px-3 py-2.5 rounded-xl border text-sm font-body transition-none"
                          [class.border-vroom-green]="isCorrect"
                       [class.bg-vroom-green]="isCorrect"
+                      [class.bg-opacity-10]="isCorrect"
                       [class.border-red-500]="wasSelected && !isCorrect"
                       [class.bg-red-500]="wasSelected && !isCorrect"
+                      [class.bg-opacity-10]="wasSelected && !isCorrect"
                       [class.border-vroom-border]="!isCorrect && !wasSelected"
                       [class.opacity-50]="!isCorrect && !wasSelected">
 
@@ -351,8 +357,8 @@
                     </div>
 
                     <div class="flex-1 min-w-0">
-                          <span [class.text-vroom-green]="isCorrect"
-                                [class.text-red-400]="wasSelected && !isCorrect"
+                          <span [class.text-vroom-text]="isCorrect"
+                                [class.text-vroom-text]="wasSelected && !isCorrect"
                                 [class.text-vroom-text-dim]="!isCorrect && !wasSelected">
                             {{ answer.answerText }}
                           </span>
