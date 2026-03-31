@@ -1,7 +1,7 @@
 import { Injectable, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, tap, catchError, throwError, of } from 'rxjs';
+import { Observable, tap, catchError, throwError, of, finalize } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   AuthResponse, LoginRequest, RegisterRequest,
@@ -15,12 +15,13 @@ export class AuthService {
   private readonly REFRESH_TOKEN_KEY = 'vroom_refresh_token';
   private readonly USER_KEY = 'vroom_user';
 
+  private _token = signal<string | null>(localStorage.getItem(this.TOKEN_KEY));
   private _currentUser = signal<User | null>(this.loadUserFromStorage());
   private _isLoading = signal(false);
 
   readonly currentUser = this._currentUser.asReadonly();
   readonly isLoading = this._isLoading.asReadonly();
-  readonly isAuthenticated = computed(() => !!this._currentUser());
+  readonly isAuthenticated = computed(() => !!this._token());
   readonly isStudent = computed(() => this._currentUser()?.role === Role.STUDENT);
   readonly isInstructor = computed(() => this._currentUser()?.role === Role.INSTRUCTOR);
   readonly isAdmin = computed(() => this._currentUser()?.role === Role.ADMIN);
@@ -32,9 +33,9 @@ export class AuthService {
     return this.http.post<AuthResponse>(`${this.apiUrl}/login`, request).pipe(
       tap(response => this.handleAuthSuccess(response)),
       catchError(err => {
-        this._isLoading.set(false);
         return throwError(() => err);
-      })
+      }),
+      finalize(() => this._isLoading.set(false))
     );
   }
 
@@ -43,9 +44,9 @@ export class AuthService {
     return this.http.post<AuthResponse>(`${this.apiUrl}/register`, request).pipe(
       tap(response => this.handleAuthSuccess(response)),
       catchError(err => {
-        this._isLoading.set(false);
         return throwError(() => err);
-      })
+      }),
+      finalize(() => this._isLoading.set(false))
     );
   }
 
@@ -96,22 +97,35 @@ export class AuthService {
   }
 
   getToken(): string | null {
-    return localStorage.getItem(this.TOKEN_KEY);
+    return this._token();
   }
 
   getRefreshToken(): string | null {
     return localStorage.getItem(this.REFRESH_TOKEN_KEY);
   }
 
-  setToken(token: string): void {
+  setToken(token: string | null): void {
+    this._token.set(token);
+    if (!token) {
+      localStorage.removeItem(this.TOKEN_KEY);
+      return;
+    }
     localStorage.setItem(this.TOKEN_KEY, token);
   }
 
-  setRefreshToken(token: string): void {
+  setRefreshToken(token: string | null): void {
+    if (!token) {
+      localStorage.removeItem(this.REFRESH_TOKEN_KEY);
+      return;
+    }
     localStorage.setItem(this.REFRESH_TOKEN_KEY, token);
   }
 
   private handleAuthSuccess(response: AuthResponse): void {
+    if (!response.accessToken) {
+      return;
+    }
+
     this.setToken(response.accessToken);
     this.setRefreshToken(response.refreshToken);
 
@@ -127,27 +141,32 @@ export class AuthService {
 
     this._currentUser.set(user);
     localStorage.setItem(this.USER_KEY, JSON.stringify(user));
-    this._isLoading.set(false);
-    this.redirectAfterLogin();
+    void this.redirectAfterLogin();
   }
 
-  private redirectAfterLogin(): void {
+  public redirectAfterLogin(returnUrl?: string | null): Promise<boolean> {
+    const safeReturnUrl = (returnUrl && returnUrl.startsWith('/') && !returnUrl.startsWith('/auth'))
+      ? returnUrl
+      : null;
+
+    if (safeReturnUrl) {
+      return this.router.navigateByUrl(safeReturnUrl);
+    }
+
     const user = this._currentUser();
     if (user?.role === Role.ADMIN) {
-      this.router.navigate(['/admin/dashboard']);
-      return;
+      return this.router.navigate(['/admin/dashboard']);
     }
 
     if (user?.role === Role.INSTRUCTOR) {
-      this.router.navigate(['/dashboard/instructor']);
-      return;
+      return this.router.navigate(['/dashboard/instructor']);
     }
 
-    this.router.navigate(['/dashboard']);
+    return this.router.navigate(['/dashboard']);
   }
 
   private clearSession(): void {
-    localStorage.removeItem(this.TOKEN_KEY);
+    this.setToken(null);
     localStorage.removeItem(this.REFRESH_TOKEN_KEY);
     localStorage.removeItem(this.USER_KEY);
     this._currentUser.set(null);

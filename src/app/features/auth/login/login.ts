@@ -1,10 +1,11 @@
 import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { ActivatedRoute, RouterModule } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { LoginRequest } from '../../../shared/models/user.model';
 import { HttpErrorResponse } from '@angular/common/http';
+import { finalize } from 'rxjs';
 
 @Component({
   selector: 'app-login',
@@ -17,12 +18,19 @@ export class LoginComponent {
   errorMessage = signal('');
   showPassword = signal(false);
   isSubmitting = signal(false);
+  private returnUrl: string | null;
 
-  constructor(private fb: FormBuilder, public authService: AuthService) {
+  constructor(
+    private fb: FormBuilder,
+    private route: ActivatedRoute,
+    public authService: AuthService
+  ) {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]]
     });
+
+    this.returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
   }
 
   get emailCtrl() { return this.loginForm.get('email')!; }
@@ -40,9 +48,13 @@ export class LoginComponent {
     this.errorMessage.set('');
 
     const request: LoginRequest = this.loginForm.value;
-    this.authService.login(request).subscribe({
+    this.authService.login(request).pipe(
+      finalize(() => this.isSubmitting.set(false))
+    ).subscribe({
+      next: () => {
+        void this.authService.redirectAfterLogin(this.returnUrl);
+      },
       error: (err: HttpErrorResponse) => {
-        this.isSubmitting.set(false);
         if (err.status === 401) {
           this.errorMessage.set('Invalid email or password. Please try again.');
         } else if (err.status === 0) {

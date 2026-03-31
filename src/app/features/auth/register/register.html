@@ -11,7 +11,11 @@
       background-size: 60px 60px;
     "></div>
 
-    <div class="relative z-10 flex flex-col items-start justify-end w-full h-full px-12 pb-16">
+    <div class="relative z-10 flex flex-col items-start justify-center w-full h-full px-12 py-24">
+      <a routerLink="/" class="vroom-logo hidden lg:inline-flex items-center gap-2 text-6xl mb-12">
+        <span class="text-gradient">V</span>ROOM
+      </a>
+
       <div class="mb-6">
         <span class="badge-pill mb-4 inline-flex">
           <span class="w-2 h-2 rounded-full bg-vroom-green animate-pulse"></span>
@@ -43,11 +47,11 @@
   </div>
 
   <!-- Right Panel: Form -->
-  <div class="auth-panel order-1 lg:order-2 overflow-y-auto">
+  <div class="auth-panel order-1 lg:order-2 py-8">
     <div class="max-w-md w-full mx-auto animate-fade-in">
 
       <!-- Logo -->
-      <a routerLink="/" class="vroom-logo inline-flex items-center gap-2 mb-10">
+      <a routerLink="/" class="vroom-logo lg:hidden inline-flex items-center gap-2 mb-6">
         <span class="text-gradient">V</span>ROOM
       </a>
 
@@ -62,7 +66,7 @@
       }
 
       <!-- Role selector -->
-      <div class="grid grid-cols-2 gap-3 mb-6 animate-slide-up animate-fill-both animate-delay-100">
+      <div class="grid grid-cols-2 gap-3 mb-5 animate-slide-up animate-fill-both animate-delay-100">
         <button
           type="button"
           (click)="selectRole(Role.STUDENT)"
@@ -71,7 +75,7 @@
           [class.text-vroom-text]="selectedRole() === Role.STUDENT"
           [class.border-vroom-border]="selectedRole() !== Role.STUDENT"
           [class.text-vroom-muted]="selectedRole() !== Role.STUDENT"
-          class="card p-4 text-center transition-all duration-200 hover:border-vroom-accent/50 cursor-pointer"
+          class="card p-3 text-center transition-all duration-200 hover:border-vroom-accent/50 cursor-pointer"
         >
           <div class="text-2xl mb-1">🎓</div>
           <div class="font-display font-semibold text-sm">Student</div>
@@ -85,7 +89,7 @@
           [class.text-vroom-text]="selectedRole() === Role.INSTRUCTOR"
           [class.border-vroom-border]="selectedRole() !== Role.INSTRUCTOR"
           [class.text-vroom-muted]="selectedRole() !== Role.INSTRUCTOR"
-          class="card p-4 text-center transition-all duration-200 hover:border-vroom-accent/50 cursor-pointer"
+          class="card p-3 text-center transition-all duration-200 hover:border-vroom-accent/50 cursor-pointer"
         >
           <div class="text-2xl mb-1">🏫</div>
           <div class="font-display font-semibold text-sm">Instructor</div>

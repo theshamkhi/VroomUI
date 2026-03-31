@@ -22,7 +22,14 @@ export const guestGuard: CanActivateFn = () => {
   const router = inject(Router);
 
   if (authService.isAuthenticated()) {
-    router.navigate(['/dashboard']);
+    const role = authService.currentUser()?.role;
+    if (role === Role.ADMIN) {
+      router.navigate(['/admin/dashboard']);
+    } else if (role === Role.INSTRUCTOR) {
+      router.navigate(['/dashboard/instructor']);
+    } else {
+      router.navigate(['/dashboard']);
+    }
     return false;
   }
 

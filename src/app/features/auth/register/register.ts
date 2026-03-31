@@ -1,7 +1,7 @@
 import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { RegisterRequest, Role } from '../../../shared/models/user.model';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -36,7 +36,11 @@ export class RegisterComponent {
     { text: 'Certified instructor-created content' },
   ];
 
-  constructor(private fb: FormBuilder, public authService: AuthService) {
+  constructor(
+    private fb: FormBuilder,
+    private router: Router,
+    public authService: AuthService
+  ) {
     this.registerForm = this.fb.group({
       firstName: ['', [Validators.required, Validators.minLength(2)]],
       lastName: ['', [Validators.required, Validators.minLength(2)]],
@@ -87,6 +91,10 @@ export class RegisterComponent {
     const request: RegisterRequest = formData;
 
     this.authService.register(request).subscribe({
+      next: () => {
+        this.isSubmitting.set(false);
+        this.router.navigate(['/auth/login'], { queryParams: { registered: '1' } });
+      },
       error: (err: HttpErrorResponse) => {
         this.isSubmitting.set(false);
         if (err.status === 409) {

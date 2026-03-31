@@ -18,7 +18,12 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
       if (shouldRetry) {
         return authService.refreshToken().pipe(
-          switchMap(response => next(addToken(req, response.accessToken))),
+          switchMap(response => {
+            if (!response.accessToken) {
+              return throwError(() => new Error('No access token received after refresh'));
+            }
+            return next(addToken(req, response.accessToken));
+          }),
           catchError(refreshError => {
             authService.logout();
             return throwError(() => refreshError);
