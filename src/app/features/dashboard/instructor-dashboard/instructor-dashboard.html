@@ -1,20 +1,20 @@
 <div class="min-h-full bg-vroom-black">
 
   <!-- ══ HEADER ══ -->
-  <div class="border-b border-vroom-border bg-vroom-dark px-6 lg:px-8 py-6">
-    <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
+  <div class="border-b border-vroom-border bg-vroom-dark">
+    <div class="max-w-7xl mx-auto px-6 lg:px-8 py-8 flex items-center justify-between gap-4">
       <div>
-        <div class="flex items-center gap-2 mb-1">
-          <div class="w-2 h-2 rounded-full bg-vroom-accent"></div>
-          <span class="text-xs font-mono text-vroom-muted uppercase tracking-widest">Instructor</span>
+        <div class="flex items-center gap-2 mb-1.5">
+          <div class="w-2 h-2 rounded-full bg-vroom-accent shadow-[0_0_8px_rgba(255,77,28,0.5)]"></div>
+          <span class="text-[10px] font-mono font-bold text-vroom-muted uppercase tracking-[0.2em]">Instructor</span>
         </div>
-        <h1 class="text-2xl font-display font-bold text-vroom-text">
+        <h1 class="text-2xl lg:text-3xl font-display font-bold text-vroom-text tracking-tight">
           Welcome back, {{ authService.currentUser()?.firstName }}
         </h1>
-        <p class="text-vroom-text-dim font-body text-sm mt-0.5">Here's what's happening with your scenarios</p>
+        <p class="text-vroom-text-dim font-body text-sm mt-1">Here's what's happening with your scenarios</p>
       </div>
       <button (click)="goToNew()"
-              class="btn-primary inline-flex items-center gap-2 text-sm flex-shrink-0">
+              class="btn-primary inline-flex items-center gap-2 text-sm flex-shrink-0 shadow-lg shadow-vroom-accent/10">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
         </svg>

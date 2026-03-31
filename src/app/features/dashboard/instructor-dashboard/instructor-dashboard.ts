@@ -107,6 +107,12 @@ export class InstructorDashboardComponent implements OnInit {
 
   ngOnInit(): void { this.load(); }
 
+  private normalizeScenario(s: Scenario): Scenario {
+    if (s.status === ScenarioStatus.PUBLISHED) return s;
+    if ((s as Scenario).published === true) return { ...s, status: ScenarioStatus.PUBLISHED };
+    return s;
+  }
+
   load(): void {
     this.isLoading.set(true);
     this.hasError.set(false);
@@ -123,7 +129,7 @@ export class InstructorDashboardComponent implements OnInit {
         const myScenarios = me
           ? scenarios.filter(s => s.createdBy === me.id)
           : scenarios;
-        this.scenarios.set(myScenarios);
+        this.scenarios.set((myScenarios ?? []).map(s => this.normalizeScenario(s)));
         this.videos.set(videos ?? []);
         this.isLoading.set(false);
       },

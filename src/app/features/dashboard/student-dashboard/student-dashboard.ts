@@ -1,17 +1,27 @@
-import { Component, signal, computed, OnInit } from '@angular/core';
+import { Component, signal, computed, OnInit, Pipe, PipeTransform } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { forkJoin, of, catchError } from 'rxjs';
+import { forkJoin, of, catchError, tap } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { DashboardService } from '../../../core/services/dashboard.service';
 import { Progress, CompletionStatus, StudentBadge } from '../../../shared/models/progress.model';
 import { Scenario, Difficulty, Assignment, AssignmentStatus } from '../../../shared/models/scenario.model';
 import { ProgressForScenarioPipe } from '../../../shared/pipes/progress-for-scenario.pipe';
 
+@Pipe({
+  name: 'any',
+  standalone: true
+})
+export class AnyPipe implements PipeTransform {
+  transform(value: any): any {
+    return value;
+  }
+}
+
 @Component({
   selector: 'app-student-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule, ProgressForScenarioPipe],
+  imports: [CommonModule, RouterModule, ProgressForScenarioPipe, AnyPipe],
   templateUrl: './student-dashboard.html'
 })
 export class StudentDashboardComponent implements OnInit {
@@ -95,9 +105,49 @@ export class StudentDashboardComponent implements OnInit {
   });
 
   // Current level based on total points
-  currentLevel = computed(() => Math.max(1, Math.floor(this.totalPoints() / 500) + 1));
-  pointsToNextLevel = computed(() => 500 - (this.totalPoints() % 500));
-  levelProgress = computed(() => ((this.totalPoints() % 500) / 500) * 100);
+  currentLevel = computed(() => {
+    const pts = this.totalPoints();
+    if (pts >= 1500) return 6;
+    if (pts >= 1000) return 5;
+    if (pts >= 600) return 4;
+    if (pts >= 300) return 3;
+    if (pts >= 100) return 2;
+    return 1;
+  });
+
+  nextThreshold = computed(() => {
+    const pts = this.totalPoints();
+    if (pts < 100) return 100;
+    if (pts < 300) return 300;
+    if (pts < 600) return 600;
+    if (pts < 1000) return 1000;
+    if (pts < 1500) return 1500;
+    return null;
+  });
+
+  prevThreshold = computed(() => {
+    const pts = this.totalPoints();
+    if (pts >= 1500) return 1500;
+    if (pts >= 1000) return 1000;
+    if (pts >= 600) return 600;
+    if (pts >= 300) return 300;
+    if (pts >= 100) return 100;
+    return 0;
+  });
+
+  pointsToNextLevel = computed(() => {
+    const next = this.nextThreshold();
+    return next ? next - this.totalPoints() : 0;
+  });
+
+  levelProgress = computed(() => {
+    const next = this.nextThreshold();
+    const prev = this.prevThreshold();
+    if (!next) return 100;
+    const range = next - prev;
+    const progress = this.totalPoints() - prev;
+    return Math.min(100, Math.max(0, (progress / range) * 100));
+  });
 
   // Greet time
   greeting = computed(() => {
@@ -107,7 +157,18 @@ export class StudentDashboardComponent implements OnInit {
     return 'Good evening';
   });
 
-  readonly CompletionStatus = CompletionStatus;
+  protected getStudentBadgeBadgeId(sb: StudentBadge): string | undefined {
+    const anySb = sb as any;
+    return (
+      sb.id ??
+      sb.badgeId ??
+      anySb.badge_id ??
+      sb.badge?.id ??
+      anySb.badge?.id
+    );
+  }
+
+  protected readonly CompletionStatus = CompletionStatus;
 
   constructor(
     public authService: AuthService,
@@ -115,14 +176,15 @@ export class StudentDashboardComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    // Each call is individually fault-tolerant — a 500 on one endpoint
-    // won't blank the entire dashboard, it just leaves that section empty.
     forkJoin({
       progress: this.dashboardService.getMyProgress().pipe(
         catchError(() => { this.progressError.set(true); return of([]); })
       ),
       badges: this.dashboardService.getMyBadges().pipe(
-        catchError(() => { this.badgesError.set(true); return of([]); })
+        catchError((err: any) => { 
+          this.badgesError.set(true); 
+          return of([] as StudentBadge[]); 
+        })
       ),
       popular: this.dashboardService.getPopularScenarios(8).pipe(
         catchError(() => { this.scenariosError.set(true); return of([]); })
@@ -131,14 +193,14 @@ export class StudentDashboardComponent implements OnInit {
         catchError(() => { this.assignmentsError.set(true); return of([]); })
       ),
     }).subscribe({
-      next: ({ progress, badges, popular, assignments }) => {
+      next: ({ progress, badges, popular, assignments }: { progress: Progress[], badges: StudentBadge[], popular: Scenario[], assignments: Assignment[] }) => {
         this.progressList.set(progress);
         this.badges.set(badges);
         this.popularScenarios.set(popular);
         this.assignments.set(assignments ?? []);
         this.isLoading.set(false);
       },
-      error: () => {
+      error: (err) => {
         this.isLoading.set(false);
         this.hasError.set(true);
       }
