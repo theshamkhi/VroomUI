@@ -4,7 +4,7 @@
   <div class="border-b border-vroom-border bg-vroom-dark px-6 lg:px-8 py-5">
     <div class="max-w-7xl mx-auto flex items-center justify-between gap-4 flex-wrap">
       <div>
-        <h1 class="text-2xl font-display font-bold text-vroom-text">Instructor Management</h1>
+        <h1 class="text-2xl lg:text-3xl font-display font-bold text-vroom-text">Instructor Management</h1>
         @if (!isLoading()) {
           <p class="text-vroom-text-dim font-body text-sm mt-0.5">
             <span class="font-body font-bold tabular-nums">{{ totalElements() }}</span> instructors
@@ -157,7 +157,7 @@
                 <!-- Stats row -->
                 <div class="grid grid-cols-3 gap-2">
                   <div class="bg-vroom-surface/50 rounded-xl px-3 py-2 text-center">
-                    <div class="font-body font-bold tabular-nums text-sm text-vroom-text">{{ i.activeStudents ?? 0 }}</div>
+                    <div class="text-lg font-display font-bold text-vroom-text tabular-nums">{{ i.activeStudents ?? 0 }}</div>
                     <div class="font-body text-[10px] text-vroom-muted mt-0.5">Students</div>
                   </div>
                   <div class="bg-vroom-surface/50 rounded-xl px-3 py-2 text-center">
@@ -167,7 +167,7 @@
                     <div class="font-body text-[10px] text-vroom-muted mt-0.5">Rating</div>
                   </div>
                   <div class="bg-vroom-surface/50 rounded-xl px-3 py-2 text-center">
-                    <div class="font-body font-bold tabular-nums text-sm text-vroom-text">{{ i.yearsOfExperience ?? '—' }}</div>
+                    <div class="text-lg font-display font-bold text-vroom-text tabular-nums">{{ i.yearsOfExperience ?? '—' }}</div>
                     <div class="font-body text-[10px] text-vroom-muted mt-0.5">Yrs Exp</div>
                   </div>
                 </div>
@@ -203,7 +203,7 @@
         <div class="w-72 flex-shrink-0 hidden xl:block">
           <div class="card rounded-2xl overflow-hidden sticky top-6">
             <div class="px-5 py-4 border-b border-vroom-border flex items-center justify-between">
-              <h3 class="font-display font-semibold text-vroom-text text-sm">Instructor Detail</h3>
+      <h3 class="text-2xl lg:text-3xl font-display font-bold text-vroom-text text-center text-lg mb-1">Instructor Detail</h3>
               <button (click)="selected.set(null)" class="text-vroom-muted hover:text-vroom-text transition-colors">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
               </button>
@@ -220,7 +220,7 @@
                     {{ initials(selected()!) }}
                   </span>
               </div>
-              <p class="font-body font-semibold text-vroom-text">{{ selected()!.fullName }}</p>
+              <p class="text-lg font-display font-bold text-vroom-text">{{ selected()!.fullName }}</p>
               <p class="font-body text-xs text-vroom-muted">{{ selected()!.email }}</p>
               <div class="mt-2">
                 @if (selected()!.enabled) {

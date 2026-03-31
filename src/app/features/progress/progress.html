@@ -1,15 +1,17 @@
 <div class="min-h-full bg-vroom-black">
 
-  <!-- ══ HEADER ══ -->
-  <div class="border-b border-vroom-border bg-vroom-dark px-6 lg:px-8 py-6">
-    <div class="max-w-7xl mx-auto flex items-center justify-between">
+  <!-- ════ HEADER ════ -->
+  <div class="border-b border-vroom-border bg-vroom-dark">
+    <div class="max-w-7xl mx-auto px-6 lg:px-8 py-8 flex items-center justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-display font-bold text-vroom-text">Progress</h1>
-        <p class="text-vroom-text-dim font-body text-sm mt-0.5">Your learning journey at a glance</p>
+        <h1 class="text-2xl lg:text-3xl font-display font-bold text-vroom-text tracking-tight">Progress</h1>
+        <p class="text-vroom-text-dim font-body text-sm mt-1">Your learning journey at a glance</p>
       </div>
       @if (!isLoading() && allProgress().length > 0) {
-        <div class="text-xs font-body text-vroom-muted">
-          {{ allProgress().length }} scenario{{ allProgress().length !== 1 ? 's' : '' }} tracked
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-mono font-bold tabular-nums px-3 py-1.5 rounded-full bg-vroom-surface border border-vroom-border text-vroom-text">
+            {{ allProgress().length }} scenarios tracked
+          </span>
         </div>
       }
     </div>

@@ -1,10 +1,10 @@
 <div class="min-h-full bg-vroom-black">
 
   <!-- ══ HEADER ══ -->
-  <div class="border-b border-vroom-border bg-vroom-dark px-6 lg:px-8 py-6">
-    <div class="max-w-4xl mx-auto">
-      <h1 class="text-2xl font-display font-bold text-vroom-text">Settings</h1>
-      <p class="text-vroom-text-dim font-body text-sm mt-0.5">Manage your account and preferences</p>
+  <div class="border-b border-vroom-border bg-vroom-dark">
+    <div class="max-w-4xl mx-auto px-6 lg:px-8 py-8">
+      <h1 class="text-2xl lg:text-3xl font-display font-bold text-vroom-text tracking-tight">Settings</h1>
+      <p class="text-vroom-text-dim font-body text-sm mt-1">Manage your account and preferences</p>
     </div>
   </div>
 
@@ -46,7 +46,7 @@
               <div class="h-4 bg-vroom-surface rounded-full w-1/2 mx-auto"></div>
             </div>
           } @else {
-            <h3 class="font-display font-black text-vroom-text text-lg leading-tight tracking-tight">{{ fullName() }}</h3>
+            <h3 class="text-2xl lg:text-2xl font-display font-bold text-vroom-text leading-tight tracking-tight">{{ fullName() }}</h3>
             <p class="text-vroom-muted font-body text-xs mt-1.5 truncate">{{ user()?.email }}</p>
             <div class="mt-4 flex justify-center">
               <span class="text-[10px] font-mono font-bold uppercase tracking-widest px-3 py-1 rounded-full border shadow-inner-glow transition-all duration-300" [class]="roleBadge().cls">
@@ -59,15 +59,15 @@
           @if (progressStats()) {
             <div class="mt-6 pt-6 border-t border-vroom-border/50 grid grid-cols-3 gap-2 text-center">
               <div class="group/stat">
-                <div class="text-lg font-display font-black text-vroom-text group-hover/stat:text-vroom-accent transition-colors">{{ progressStats()!.total }}</div>
+                <div class="text-2xl font-display font-bold text-vroom-text mb-1 group-hover/stat:text-vroom-accent transition-colors">{{ progressStats()!.total }}</div>
                 <div class="text-[10px] font-mono font-bold uppercase tracking-tighter text-vroom-muted leading-tight">Tried</div>
               </div>
               <div class="group/stat">
-                <div class="text-lg font-display font-black text-vroom-green">{{ progressStats()!.passed }}</div>
+                <div class="text-2xl font-display font-bold text-vroom-green mb-1">{{ progressStats()!.passed }}</div>
                 <div class="text-[10px] font-mono font-bold uppercase tracking-tighter text-vroom-muted leading-tight">Passed</div>
               </div>
               <div class="group/stat">
-                <div class="text-lg font-display font-black text-vroom-accent">{{ progressStats()!.totalPts | number }}</div>
+                <div class="text-2xl font-display font-bold text-vroom-accent mb-1">{{ progressStats()!.totalPts | number }}</div>
                 <div class="text-[10px] font-mono font-bold uppercase tracking-tighter text-vroom-muted leading-tight">Points</div>
               </div>
             </div>
@@ -124,7 +124,7 @@
 
           <div class="card rounded-2xl overflow-hidden">
             <div class="px-6 py-5 border-b border-vroom-border">
-              <h2 class="font-display font-semibold text-base text-vroom-text">Personal Information</h2>
+              <h2 class="text-2xl lg:text-3xl font-display font-bold text-vroom-text">Personal Information</h2>
               <p class="text-xs text-vroom-muted font-body mt-0.5">Your account details from registration</p>
             </div>
 

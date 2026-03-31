@@ -40,7 +40,7 @@
             <div class="flex items-center gap-2 mb-1">
               <span class="text-[10px] font-mono font-bold tracking-widest px-2 py-0.5 rounded-lg bg-vroom-accent/10 border border-vroom-accent/20 text-vroom-accent">ADMIN DASHBOARD</span>
             </div>
-            <h1 class="text-2xl lg:text-3xl font-display font-black text-vroom-text tracking-tight">Platform Overview</h1>
+            <h1 class="text-2xl lg:text-3xl font-display font-bold text-vroom-text tracking-tight">Platform Overview</h1>
             <p class="text-vroom-text-dim font-body text-sm mt-1">Monitor and manage the entire Vroom platform.</p>
           </div>
           <div class="flex items-center gap-3">
@@ -88,7 +88,7 @@
             <span class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse shadow-[0_0_10px_rgba(251,191,36,0.5)]"></span>
           }
           </div>
-          <div class="font-display font-black tabular-nums text-3xl text-vroom-text tracking-tight">{{ kpi.value | number }}</div>
+          <div class="text-3xl font-display font-bold text-vroom-text mb-1 tracking-tight">{{ kpi.value | number }}</div>
           <div class="font-body text-xs font-bold uppercase tracking-wider text-vroom-muted mt-1">{{ kpi.label }}</div>
           <div class="font-body text-xs mt-2 px-2 py-1 rounded-lg bg-vroom-black/30 w-fit" 
                [class.text-amber-400]="kpi.alert" [class.text-vroom-text-dim]="!kpi.alert">{{ kpi.sub }}</div>

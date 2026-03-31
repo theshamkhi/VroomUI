@@ -33,7 +33,7 @@ export class SidebarComponent implements OnInit {
     { label: 'Assignments',  route: '/assignments',   icon: 'assignments',
       badge: this.pendingAssignmentCount() > 0 ? this.pendingAssignmentCount() : undefined },
     { label: 'My Progress',  route: '/progress',      icon: 'progress' },
-    { label: 'Badges',       route: '/badges',        icon: 'badge' },
+    { label: 'My Badges',    route: '/my-badges',     icon: 'badge' },
     { label: 'Settings',     route: '/settings',      icon: 'settings' },
   ]);
 

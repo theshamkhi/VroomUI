@@ -4,7 +4,7 @@
   <div class="border-b border-vroom-border bg-vroom-dark px-6 lg:px-8 py-5">
     <div class="max-w-7xl mx-auto flex items-center justify-between gap-4 flex-wrap">
       <div>
-        <h1 class="text-2xl font-display font-bold text-vroom-text">User Management</h1>
+        <h1 class="text-2xl lg:text-3xl font-display font-bold text-vroom-text">User Management</h1>
         @if (!isLoading()) {
           <p class="text-vroom-text-dim font-body text-sm mt-0.5">
             <span class="font-body font-bold tabular-nums">{{ totalElements() }}</span> total users
@@ -163,7 +163,7 @@
                         </span>
                     </div>
                     <div [class.opacity-50]="!u.enabled">
-                      <p class="font-body text-sm font-medium text-vroom-text">{{ u.fullName }}</p>
+                      <p class="text-lg font-display font-bold text-vroom-text">{{ u.fullName }}</p>
                       <p class="font-body text-xs text-vroom-muted">{{ u.email }}</p>
                     </div>
                     </div>
@@ -277,7 +277,7 @@
       <div class="w-12 h-12 rounded-2xl bg-red-500/10 border border-red-500/25 flex items-center justify-center mx-auto mb-4">
         <svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
       </div>
-      <h3 class="font-display font-bold text-vroom-text text-center text-lg mb-1">Delete User</h3>
+      <h3 class="text-2xl lg:text-3xl font-display font-bold text-vroom-text text-center text-lg mb-1">Delete User</h3>
       <p class="font-body text-sm text-vroom-text-dim text-center mb-6">
         Are you sure you want to permanently delete <span class="text-vroom-text font-semibold">{{ deleteTarget()?.fullName }}</span>? This cannot be undone.
       </p>
@@ -297,7 +297,7 @@
   <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
     <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" (click)="roleTarget.set(null)"></div>
     <div class="relative bg-vroom-dark border border-vroom-border rounded-2xl p-6 w-full max-w-sm shadow-xl animate-fade-in">
-      <h3 class="font-display font-bold text-vroom-text text-lg mb-1">Change Role</h3>
+      <h3 class="text-2xl lg:text-3xl font-display font-bold text-vroom-text text-lg mb-1">Change Role</h3>
       <p class="font-body text-sm text-vroom-text-dim mb-5">
         Update role for <span class="text-vroom-text font-semibold">{{ roleTarget()?.fullName }}</span>
       </p>

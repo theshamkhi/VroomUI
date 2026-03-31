@@ -112,19 +112,15 @@ export class SettingsComponent implements OnInit {
     this.passwordStatus.set('sending');
     this.passwordError.set(null);
 
-    this.http.post<void>(`${environment.apiUrl}/auth/request-reset`, { email })
+    this.authService.requestPasswordReset(email)
       .pipe(catchError(err => {
         this.passwordError.set(err?.error?.message ?? 'Failed to send reset email. Please try again.');
         this.passwordStatus.set('error');
         return of(null);
       }))
       .subscribe(result => {
-        if (result !== null || this.passwordStatus() !== 'error') {
-          // null means catchError didn't fire (void response treated as null by of())
-          // check status wasn't already set to error
-          if (this.passwordStatus() !== 'error') {
-            this.passwordStatus.set('sent');
-          }
+        if (result !== null) {
+          this.passwordStatus.set('sent');
         }
       });
   }
